@@ -13,7 +13,6 @@ kotlin {
     linuxX64()
     // requires Android SDK
     androidNativeX64()
-    // requires Android SDK
     androidNativeArm64()
     iosX64()
     iosArm64()

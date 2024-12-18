@@ -4,7 +4,7 @@ plugins {
     kotlin("multiplatform")
 }
 
-group = "com.github.yannickreiss.kconmapper"
+group = "com.github.yanneckreiss.kconmapper"
 version = "1.0-SNAPSHOT"
 
 kotlin {
