@@ -4,9 +4,6 @@ plugins {
     kotlin("multiplatform")
 }
 
-group = "com.github.yanneckreiss.kconmapper"
-version = "1.0-SNAPSHOT"
-
 kotlin {
     jvm()
     sourceSets {

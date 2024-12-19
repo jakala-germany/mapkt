@@ -1,3 +1,6 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     kotlin("multiplatform") apply false
     id("org.gradle.maven-publish") apply true
@@ -31,28 +34,26 @@ allprojects {
         apply("org.gradle.maven-publish")
     }
 
-    extensions.configure<PublishingExtension> {
-        publishing {
+    if (!project.name.contains("sample", ignoreCase = true)) {
+        apply(plugin = "maven-publish")
+
+        configure<PublishingExtension> {
             publications {
-                afterEvaluate {
-                    filterIsInstance<MavenPublication>().forEach { pub ->
-                        pub.artifactId = configuration.artifactId
-                        pub.version = this.version.toString() + "-SNAPSHOT3"
-                        pub.pom {
-                            name.set(configuration.name)
-                            description.set(configuration.description)
-//                        url.set("https://github.com/jakala-germany/kmm-hvv-switch")
-                            inceptionYear.set(configuration.inceptionYear)
-                            organization {
-//                            name.set("FFW")
-//                            url.set("https://ffw.com/")
-                            }
-                        }
+                register<MavenPublication>("maven") {
+                    groupId = project.group.toString()
+                    artifactId = when {
+                        project.name.contains("ksp") -> "ksp"
+                        project.name.contains("annotations") -> "annotations"
+                        else -> project.name
                     }
+                    version = project.version.toString()
+
+                    //from(components["kotlin"])
                 }
             }
         }
     }
+
 }
 
 open class MavenPublishingExtension {

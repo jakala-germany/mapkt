@@ -5,28 +5,17 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
-version = "1.0-SNAPSHOT"
+version = "1.0-SNAPSHOT13"
 
 kotlin {
     jvm {
         withJava()
     }
-    js(IR) {
-        browser()
-        nodejs()
-    }
-    linuxX64() {
-        binaries {
-            executable()
-        }
-    }
-    // requires Android SDK
     androidNativeX64() {
         binaries {
             executable()
         }
     }
-    // requires Android SDK
     androidNativeArm64() {
         binaries {
             executable()
@@ -42,10 +31,6 @@ kotlin {
             }
             kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
         }
-        val linuxX64Main by getting
-        val linuxX64Test by getting
-        val androidNativeX64Main by getting
-        val androidNativeArm64Main by getting
     }
 }
 
