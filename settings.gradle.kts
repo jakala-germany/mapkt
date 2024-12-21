@@ -14,6 +14,6 @@ pluginManagement {
 
 rootProject.name = "multiplatform"
 
-include(":workload")
+include(":sample")
 include(":kconmapper-ksp")
 include(":kconmapper-annotations")

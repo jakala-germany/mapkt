@@ -1,6 +1,3 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     kotlin("multiplatform") apply false
     id("org.gradle.maven-publish") apply true
@@ -47,14 +44,20 @@ allprojects {
                         else -> project.name
                     }
                     version = project.version.toString()
-
-                    //from(components["kotlin"])
                 }
             }
         }
     }
 
 }
+
+tasks.register<GradleBuild>("publishLocal") {
+    tasks = listOf(
+        ":kconmapper-ksp:publishToMavenLocal",
+        ":kconmapper-annotations:publishToMavenLocal"
+    )
+}
+
 
 open class MavenPublishingExtension {
     var artifactId: String? = null
