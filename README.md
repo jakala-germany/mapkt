@@ -7,22 +7,22 @@ support for Kotlin Multiplatform.
 
 ```kotlin
 @KConMapper(
-    toClasses = [Dog::class, Cat::class],
-    fromClasses = [DatabaseLine::class]
+    toClasses = [Cat::class],
+    fromClasses = []
 )
 data class Dog(val name: String, val age: Int)
 
 @KConMapper(
-    toClasses = [Dog::class, Cat::class],
-    fromClasses = [DatabaseLine::class]
+    toClasses = [Dog::class],
+    fromClasses = [],
 )
 data class Cat(val name: String, val age: Int)
 
 fun test() {
     val dog = Dog("Fido", 5)
     val cat = Cat("Whiskers", 3)
-    println(dog.toDog())
-    println(cat.toCat())
+    println(dog.toCat())
+    println(cat.toDog())
 }
 ```
 

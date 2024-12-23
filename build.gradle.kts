@@ -1,3 +1,6 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     kotlin("multiplatform") apply false
     id("org.gradle.maven-publish") apply true
@@ -58,6 +61,11 @@ tasks.register<GradleBuild>("publishLocal") {
     )
 }
 
+tasks.withType<KotlinCompile> {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_17
+    }
+}
 
 open class MavenPublishingExtension {
     var artifactId: String? = null
