@@ -1,16 +1,12 @@
 package entitysample.db
 
-import com.github.yanneckreiss.kconmapper.annotations.KConMapper
-import de.yanneckreiss.kconmapper.generated.toUpdateUserDTO
+import com.github.yanneckreiss.kconmapper.annotations.KConMap
 import entitysample.dto.CreateUserDTO
 import entitysample.dto.UpdateUserDTO
 import entitysample.model.Address
 
 
-@KConMapper(
-    fromClasses = [CreateUserDTO::class, UpdateUserDTO::class],
-    toClasses = [CreateUserDTO::class, UpdateUserDTO::class]
-)
+@KConMap(mapTo = [CreateUserDTO::class, UpdateUserDTO::class])
 data class UserEntity(
     val name: String,
     val address: Address,

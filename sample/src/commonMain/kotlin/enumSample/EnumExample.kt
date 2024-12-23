@@ -1,10 +1,9 @@
 package enumSample
 
-import com.github.yanneckreiss.kconmapper.annotations.KConMapper
+import com.github.yanneckreiss.kconmapper.annotations.KConMap
 
-@KConMapper(
-    fromClasses = [MappedEnumClass::class],
-    toClasses = [MappedEnumClass::class]
+@KConMap(
+    mapTo = [MappedEnumClass::class]
 )
 enum class EnumClass {
     FIRST, SECOND, THIRD, FOURTH

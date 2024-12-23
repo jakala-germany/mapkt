@@ -1,5 +1,6 @@
 package de.yanneckreiss.kconmapper.processor.generator
 
+import com.google.devtools.ksp.closestClassDeclaration
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.*
@@ -50,7 +51,10 @@ class MappingFunctionGenerator(
         packageImports.addImport(packageName, targetClassName)
 
         // Add import for source class
-        packageImports.addImport(sourceClass.packageName.asString(), sourceClass.simpleName.asString())
+        packageImports.addImport(
+            sourceClass.packageName.asString(),
+            sourceClass.simpleName.asString()
+        )
 
         // Create mapping extension function for source class to target class
         return generateExtensionMapperFunctionForSourceClass(
@@ -113,10 +117,11 @@ class MappingFunctionGenerator(
 
                     extensionFunctions += targetClassTypeParameter.name.asString()
                     // TODO: Handle multiple upper bounds
-                    targetClassTypeParameter.bounds.firstOrNull()?.let { upperBound: KSTypeReference ->
-                        packageImports.addImport(upperBound.resolve())
-                        extensionFunctions += ": $upperBound"
-                    }
+                    targetClassTypeParameter.bounds.firstOrNull()
+                        ?.let { upperBound: KSTypeReference ->
+                            packageImports.addImport(upperBound.resolve())
+                            extensionFunctions += ": $upperBound"
+                        }
 
                     extensionFunctions += separator
 
@@ -205,6 +210,20 @@ class MappingFunctionGenerator(
         return extensionFunctions
     }
 
+    /**
+     * Adds missing constructor arguments to the function head as parameters.
+     * e.g.
+     * ```
+     * fun SourceClass.toTargetClass(
+     *    missingArgument1: MissingArgumentType,
+     *    missingArgument2: MissingArgumentType
+     *    ) = TargetClass(
+     *    missingArgument1 = missingArgument1,
+     *    missingArgument2 = missingArgument2,
+     *    arg3 = this.arg3
+     * )
+     * ```
+     */
     private fun convertMissingConstructorArgumentToDeclarationText(
         isLastIndex: Boolean,
         missingArgument: KSValueParameter,
@@ -213,6 +232,8 @@ class MappingFunctionGenerator(
     ): String {
 
         var missingArgumentDeclarationText = ""
+
+        // types like e.g. :Pair<SomeClass, SomeOtherClass>, we need to resolve SomeClass and SomeOtherClass
         val argumentTypes: MutableList<ArgumentType> = mutableListOf()
         val missingArgumentType: KSType = missingArgument.type.resolve()
 
@@ -236,7 +257,15 @@ class MappingFunctionGenerator(
             }
         }
 
-        missingArgumentDeclarationText += "\t${missingArgument.name?.asString()}: ${missingArgumentType.getName()}"
+        val missingArgumentClassDeclaration = missingArgumentType.declaration.closestClassDeclaration()
+
+        missingArgumentClassDeclaration?.let {
+            // TODO add support for args and evaluate extra annotation
+            // val annotation = extractKConMapAnnotation(missingArgumentClassDeclaration, logger)
+            missingArgumentDeclarationText +=
+                "\t${missingArgument.name?.asString()}: ${missingArgumentType.getName()} = this.${missingArgument.name?.asString()}.to${missingArgumentType.getName()
+                }${OPEN_FUNCTION}${CLOSE_FUNCTION}"
+        }
 
         if (argumentTypes.isNotEmpty()) {
             missingArgumentDeclarationText += DIAMOND_OPERATOR_OPEN
@@ -290,76 +319,79 @@ class MappingFunctionGenerator(
             var matchingArgument: MatchingArgument? = null
 
             // Search for any matching fields, also considers fields of supertype
-            sourceClass.getAllProperties().forEach { parameterFromSourceClass: KSPropertyDeclaration ->
-                val parameterNameFromSourceClass: String = parameterFromSourceClass.simpleName.asString()
+            sourceClass.getAllProperties()
+                .forEach { parameterFromSourceClass: KSPropertyDeclaration ->
+                    val parameterNameFromSourceClass: String =
+                        parameterFromSourceClass.simpleName.asString()
 
-                // Get the aliases from the KConMapperProperty annotation, can in reality only be of type ArrayList<String>?
-                val aliases: Set<String> =
-                    findKConMapperPropertyAliases(parameterFromSourceClass.annotations + valueParam.annotations)
+                    // Get the aliases from the KConMapperProperty annotation, can in reality only be of type ArrayList<String>?
+                    val aliases: Set<String> =
+                        findKConMapperPropertyAliases(parameterFromSourceClass.annotations + valueParam.annotations)
 
-                // The argument matches if either the actual name or the alias from the KConMapperProperty annotation is the same
-                if ((parameterNameFromSourceClass == valueName) || aliases.any { alias -> alias == valueName || alias == parameterNameFromSourceClass }) {
-                    val parameterTypeFromTargetClass: KSType = valueParam.type.resolve()
-                    val parameterTypeFromSourceClass: KSType = parameterFromSourceClass.type.resolve()
+                    // The argument matches if either the actual name or the alias from the KConMapperProperty annotation is the same
+                    if ((parameterNameFromSourceClass == valueName) || aliases.any { alias -> alias == valueName || alias == parameterNameFromSourceClass }) {
+                        val parameterTypeFromTargetClass: KSType = valueParam.type.resolve()
+                        val parameterTypeFromSourceClass: KSType =
+                            parameterFromSourceClass.type.resolve()
 
-                    val referencedTargetClassGenericTypeParameter: KSTypeParameter? =
-                        targetClassTypeParameters.firstOrNull { targetClassTypeParam ->
-                            targetClassTypeParam.simpleName.asString() == parameterTypeFromTargetClass.getName()
-                        }
+                        val referencedTargetClassGenericTypeParameter: KSTypeParameter? =
+                            targetClassTypeParameters.firstOrNull { targetClassTypeParam ->
+                                targetClassTypeParam.simpleName.asString() == parameterTypeFromTargetClass.getName()
+                            }
 
-                    val targetClassTypeParamUpperBoundDeclaration: KSDeclaration? =
-                        referencedTargetClassGenericTypeParameter
-                            ?.bounds
-                            ?.firstOrNull()
-                            ?.resolve()
-                            ?.declaration
+                        val targetClassTypeParamUpperBoundDeclaration: KSDeclaration? =
+                            referencedTargetClassGenericTypeParameter
+                                ?.bounds
+                                ?.firstOrNull()
+                                ?.resolve()
+                                ?.declaration
 
-                    if (targetClassTypeParamUpperBoundDeclaration != null &&
-                        parameterTypeFromSourceClass.declaration.containsSupertype(
-                            targetClassTypeParamUpperBoundDeclaration
-                        ) &&
-                        evaluateKSTypeAssignable(
-                            parameterTypeFromSourceClass = parameterTypeFromSourceClass,
-                            parameterTypeFromTargetClass = parameterTypeFromTargetClass,
-                            isGenericType = true
-                        )
-                    ) {
-                        matchingArgument = MatchingArgument(
-                            targetClassPropertyName = valueName,
-                            sourceClassPropertyName = parameterNameFromSourceClass,
-                            targetClassPropertyGenericTypeName = run {
-                                if (targetClassTypeParamUpperBoundDeclaration.containingFile != null) {
-                                    packageImports.addImport(
-                                        targetClassTypeParamUpperBoundDeclaration.packageName.asString(),
-                                        targetClassTypeParamUpperBoundDeclaration.getName()
-                                    )
+                        if (targetClassTypeParamUpperBoundDeclaration != null &&
+                            parameterTypeFromSourceClass.declaration.containsSupertype(
+                                targetClassTypeParamUpperBoundDeclaration
+                            ) &&
+                            evaluateKSTypeAssignable(
+                                parameterTypeFromSourceClass = parameterTypeFromSourceClass,
+                                parameterTypeFromTargetClass = parameterTypeFromTargetClass,
+                                isGenericType = true
+                            )
+                        ) {
+                            matchingArgument = MatchingArgument(
+                                targetClassPropertyName = valueName,
+                                sourceClassPropertyName = parameterNameFromSourceClass,
+                                targetClassPropertyGenericTypeName = run {
+                                    if (targetClassTypeParamUpperBoundDeclaration.containingFile != null) {
+                                        packageImports.addImport(
+                                            targetClassTypeParamUpperBoundDeclaration.packageName.asString(),
+                                            targetClassTypeParamUpperBoundDeclaration.getName()
+                                        )
+                                    }
+                                    targetClassTypeParamUpperBoundDeclaration.getName() + parameterTypeFromTargetClass.markedNullableAsString()
                                 }
-                                targetClassTypeParamUpperBoundDeclaration.getName() + parameterTypeFromTargetClass.markedNullableAsString()
-                            }
-                        )
-                    } else if (evaluateKSTypeAssignable(
-                            parameterTypeFromSourceClass = parameterTypeFromSourceClass,
-                            parameterTypeFromTargetClass = parameterTypeFromTargetClass,
-                            isGenericType = referencedTargetClassGenericTypeParameter != null
-                        )
-                    ) {
-                        matchingArgument = MatchingArgument(
-                            targetClassPropertyName = valueName,
-                            sourceClassPropertyName = parameterNameFromSourceClass,
-                            targetClassPropertyGenericTypeName = referencedTargetClassGenericTypeParameter?.let { typeParam: KSTypeParameter ->
-                                typeParam.simpleName.asString() + parameterTypeFromTargetClass.markedNullableAsString()
-                            }
-                        )
-                    } else if (!configuration.suppressMappingMismatchWarnings) {
-                        logger.warn(
-                            message = "Found matching parameter from class `$sourceClassName` for property `$valueName` of " +
-                                    "targetClass `$targetClassName` but the type `${parameterTypeFromSourceClass}` " +
-                                    "doesn't match target type `${parameterTypeFromTargetClass}`.",
-                            symbol = targetClass
-                        )
+                            )
+                        } else if (evaluateKSTypeAssignable(
+                                parameterTypeFromSourceClass = parameterTypeFromSourceClass,
+                                parameterTypeFromTargetClass = parameterTypeFromTargetClass,
+                                isGenericType = referencedTargetClassGenericTypeParameter != null
+                            )
+                        ) {
+                            matchingArgument = MatchingArgument(
+                                targetClassPropertyName = valueName,
+                                sourceClassPropertyName = parameterNameFromSourceClass,
+                                targetClassPropertyGenericTypeName = referencedTargetClassGenericTypeParameter?.let { typeParam: KSTypeParameter ->
+                                    typeParam.simpleName.asString() + parameterTypeFromTargetClass.markedNullableAsString()
+                                }
+                            )
+                        } else if (!configuration.suppressMappingMismatchWarnings) {
+                            logger.info(
+                                message = "Found matching parameter from class `$sourceClassName` for property `$valueName` of " +
+                                        "targetClass `$targetClassName` but the type `${parameterTypeFromSourceClass}` " +
+                                        "doesn't match target type `${parameterTypeFromTargetClass}`.",
+                                symbol = targetClass
+                            )
+                        }
                     }
                 }
-            }
 
             if (matchingArgument != null) {
                 matchingArguments.add(matchingArgument!!)
@@ -381,12 +413,13 @@ class MappingFunctionGenerator(
     private fun KSDeclaration.containsSupertype(searchedSuperType: KSDeclaration): Boolean {
         val classDeclaration: KSClassDeclaration =
             this.qualifiedName?.let(resolver::getClassDeclarationByName) ?: return false
-        val containsSuperType: Boolean = classDeclaration.superTypes.any { superType: KSTypeReference ->
-            val comparableSuperTypeDeclaration: KSDeclaration = superType.resolve().declaration
-            searchedSuperType.compareByQualifiedName(comparableSuperTypeDeclaration) || comparableSuperTypeDeclaration.containsSupertype(
-                searchedSuperType
-            )
-        }
+        val containsSuperType: Boolean =
+            classDeclaration.superTypes.any { superType: KSTypeReference ->
+                val comparableSuperTypeDeclaration: KSDeclaration = superType.resolve().declaration
+                searchedSuperType.compareByQualifiedName(comparableSuperTypeDeclaration) || comparableSuperTypeDeclaration.containsSupertype(
+                    searchedSuperType
+                )
+            }
 
         return containsSuperType
     }
@@ -397,7 +430,8 @@ class MappingFunctionGenerator(
         shouldAddOpenOperator: Boolean = true
     ): String {
 
-        val typeParameter: KSTypeArgument = typeParametersDequeue.removeFirstOrNull() ?: return typeText
+        val typeParameter: KSTypeArgument =
+            typeParametersDequeue.removeFirstOrNull() ?: return typeText
         val resolvedTypeParameter: KSType = typeParameter.type?.resolve() ?: return typeText
         var appendedTypeText: String = typeText
 
@@ -405,10 +439,16 @@ class MappingFunctionGenerator(
 
         // Add current parameter to the text and also add recursively all declared types
         appendedTypeText += resolvedTypeParameter.getName()
-        appendedTypeText += convertTypeArgumentToString("", ArrayDeque(resolvedTypeParameter.arguments))
+        appendedTypeText += convertTypeArgumentToString(
+            "",
+            ArrayDeque(resolvedTypeParameter.arguments)
+        )
 
         val typeParamLineEnding: String =
-            getArgumentDeclarationLineEnding(hasNextLine = typeParametersDequeue.isNotEmpty(), addSpace = true)
+            getArgumentDeclarationLineEnding(
+                hasNextLine = typeParametersDequeue.isNotEmpty(),
+                addSpace = true
+            )
 
         return if (typeParametersDequeue.isNotEmpty()) {
 
@@ -439,8 +479,13 @@ class MappingFunctionGenerator(
         isGenericType: Boolean
     ): Boolean {
         if (parameterTypeFromSourceClass.isMarkedNullable && !parameterTypeFromTargetClass.isMarkedNullable) return false
-        if (!isGenericType && !parameterTypeFromSourceClass.compareByDeclaration(parameterTypeFromTargetClass.declaration)) return false
-        return isGenericType || parameterTypeFromSourceClass.arguments.matches(parameterTypeFromTargetClass.arguments)
+        if (!isGenericType && !parameterTypeFromSourceClass.compareByDeclaration(
+                parameterTypeFromTargetClass.declaration
+            )
+        ) return false
+        return isGenericType || parameterTypeFromSourceClass.arguments.matches(
+            parameterTypeFromTargetClass.arguments
+        )
     }
 
     private fun List<KSTypeArgument>.matches(otherArguments: List<KSTypeArgument>): Boolean {
@@ -450,7 +495,8 @@ class MappingFunctionGenerator(
             otherArguments.firstOrNull { argFromOther: KSTypeArgument ->
                 val argTypeFromThis: KSType = argFromThis.type?.resolve() ?: return@all false
                 val argTypeFromOther: KSType = argFromOther.type?.resolve() ?: return@all false
-                val hasSameTypeName: Boolean = argTypeFromThis.compareByDeclaration(argTypeFromOther.declaration)
+                val hasSameTypeName: Boolean =
+                    argTypeFromThis.compareByDeclaration(argTypeFromOther.declaration)
                 val matchesNullability: Boolean =
                     if (argTypeFromThis.isMarkedNullable) !argTypeFromOther.isMarkedNullable else true
 
@@ -471,20 +517,25 @@ class MappingFunctionGenerator(
         val targetClassName: String = targetClass.getName()
 
         val sourceClassType: String =
-            sourceClass.typeParameters.firstOrNull()?.let KsTypeParameterLet@{ ksTypeParameter: KSTypeParameter ->
+            sourceClass.typeParameters.firstOrNull()
+                ?.let KsTypeParameterLet@{ ksTypeParameter: KSTypeParameter ->
 
-                val upperBound = ksTypeParameter.bounds.firstOrNull()?.resolve()?.let UpperBoundLet@{ upperBoundType ->
-                    packageImports.addImport(upperBoundType)
-                    return@UpperBoundLet upperBoundType.getName()
+                    val upperBound = ksTypeParameter.bounds.firstOrNull()?.resolve()
+                        ?.let UpperBoundLet@{ upperBoundType ->
+                            packageImports.addImport(upperBoundType)
+                            return@UpperBoundLet upperBoundType.getName()
+                        } ?: ""
+
+                    DIAMOND_OPERATOR_OPEN + upperBound + DIAMOND_OPERATOR_CLOSE
                 } ?: ""
-
-                DIAMOND_OPERATOR_OPEN + upperBound + DIAMOND_OPERATOR_CLOSE
-            } ?: ""
 
         return "$sourceClassName$sourceClassType.to$targetClassName"
     }
 
-    private fun getArgumentDeclarationLineEnding(hasNextLine: Boolean, addSpace: Boolean = false): String =
+    private fun getArgumentDeclarationLineEnding(
+        hasNextLine: Boolean,
+        addSpace: Boolean = false
+    ): String =
         if (hasNextLine) "," + if (addSpace) " " else "" else ""
 
 

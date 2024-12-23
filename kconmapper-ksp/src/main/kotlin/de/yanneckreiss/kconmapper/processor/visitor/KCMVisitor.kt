@@ -36,22 +36,42 @@ class KCMVisitor(
 
     override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
         val annotatedClass: KSClassDeclaration = classDeclaration
-        val kcmAnnotation: KSAnnotation = extractKCMAnnotation(logger, annotatedClass)
-        val mapFromClasses: List<KSClassDeclaration> = extractArgumentClasses(
+        val kcmAnnotation: KSAnnotation? = extractKConMapAnnotation(
+            targetClass = annotatedClass,
+            logger = logger
+        ) ?: extractKConMapAnnotation(
+            targetClass = annotatedClass,
+            logger = logger
+        )
+
+        if (kcmAnnotation == null) {
+            logger.warn("Missing annotation for class $annotatedClass.")
+            return
+        }
+
+        var mapFromClasses: List<KSClassDeclaration> = extractArgumentClasses(
             resolver = resolver,
             kcmAnnotation = kcmAnnotation,
             paramName = KCONMAPPER_FROM_CLASSES_ANNOTATION_ARG_NAME
         )
-        val mapToClasses: List<KSClassDeclaration> = extractArgumentClasses(
+        var mapToClasses: List<KSClassDeclaration> = extractArgumentClasses(
             resolver = resolver,
             kcmAnnotation = kcmAnnotation,
             paramName = KCONMAPPER_TARGET_CLASSES_ANNOTATION_ARG_NAME
         )
 
-        // Nothing to do if none of the mapping arguments is filled
+
         if (mapFromClasses.isEmpty() && mapToClasses.isEmpty()) {
-            logger.warn("Missing mapping functions for @$KCONMAPPER_ANNOTATION_NAME annotated class $annotatedClass.")
-            return
+            mapToClasses = resolver.extractArgumentClasses(
+                kcmAnnotation,
+                KCONMAP_FROM_TO_CLASSES_ANNOATATION_ARG_NAME
+            )
+            mapFromClasses = mapToClasses
+            // Nothing to do if none of the mapping arguments is filled
+            if (mapToClasses.isEmpty()) {
+                logger.warn("Missing mapping functions for annotated class $annotatedClass.")
+                return
+            }
         }
 
         val mappingFunctionGenerator = MappingFunctionGenerator(
@@ -86,6 +106,7 @@ class KCMVisitor(
 
         generateCode(
             containingFile = classDeclaration.containingFile!!,
+            sourcePackageName = annotatedClass.packageName.asString(),
             targetClassName = annotatedClass.simpleName.getShortName(),
             packageImports = packageImports,
             extensionFunctions = extensionFunctions
@@ -98,6 +119,7 @@ class KCMVisitor(
 
     private fun generateCode(
         containingFile: KSFile,
+        sourcePackageName: String,
         targetClassName: String,
         packageImports: PackageImports,
         extensionFunctions: String
@@ -105,48 +127,24 @@ class KCMVisitor(
         // Write the actual Kotlin File that contains the generated extension functions
         codeGenerator.createNewFile(
             dependencies = Dependencies(true, containingFile),
-            packageName = GENERATED_FILE_PATH,
+            packageName = sourcePackageName,
             fileName = "${targetClassName}$GENERATED_CLASS_SUFFIX"
         ).use { generatedFileOutputStream: OutputStream ->
             // TODO: Only add the suppression line if at least one type cast occurred.
             if (packageImports.targetClassTypeParameters.isNotEmpty()) generatedFileOutputStream.appendText(
                 SUPPRESS_UNCHECKED_CAST_STATEMENT
             )
-            generatedFileOutputStream.appendText("$PACKAGE_STATEMENT $GENERATED_FILE_PATH\n\n")
+            generatedFileOutputStream.appendText("$PACKAGE_STATEMENT $sourcePackageName\n\n")
             generatedFileOutputStream.appendText(packageImports.asFormattedImports())
             generatedFileOutputStream.appendText(extensionFunctions)
         }
     }
 
     companion object {
-        const val KCONMAPPER_FROM_CLASSES_ANNOTATION_ARG_NAME = "fromClasses"
-        const val KCONMAPPER_TARGET_CLASSES_ANNOTATION_ARG_NAME = "toClasses"
         internal const val GENERATED_CLASS_SUFFIX = "KConMapperExtensions"
         private const val SUPPRESS_UNCHECKED_CAST_STATEMENT =
             "@file:Suppress(\"UNCHECKED_CAST\")\n\n"
         private const val PACKAGE_STATEMENT = "package"
-
-        internal fun extractKCMAnnotation(
-            logger: KSPLogger,
-            targetClass: KSClassDeclaration
-        ): KSAnnotation {
-            // Checks if the class is annotated with the [KConMapper] annotation
-            val kcmAnnotation: KSAnnotation = targetClass.annotations
-                .first { targetClassAnnotations -> targetClassAnnotations.shortName.asString() == KCONMAPPER_ANNOTATION_NAME }
-
-            // Checks if the class that pretends to be the [KConMapper] annotation has the `classes` argument
-            kcmAnnotation.arguments.firstOrNull { constructorParam ->
-                constructorParam.name?.asString() == KCONMAPPER_FROM_CLASSES_ANNOTATION_ARG_NAME
-            } ?: run {
-                logger.logAndThrowError(
-                    errorMessage = "Classes annotated with `@$KCONMAPPER_ANNOTATION_NAME` must contain " +
-                            "at least one class as a parameter like: `$KCONMAPPER_ANNOTATION_NAME(classes = [YourClassToMap::kt])",
-                    targetClass = targetClass
-                )
-            }
-
-            return kcmAnnotation
-        }
 
         @Suppress("UNCHECKED_CAST")
         internal fun extractArgumentClasses(

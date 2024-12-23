@@ -10,12 +10,13 @@ import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.squareup.kotlinpoet.FileSpec
 import de.yanneckreiss.kconmapper.processor.KCMConstants.GENERATED_FILE_PATH
 import de.yanneckreiss.kconmapper.processor.KCONMAPPER_ANNOTATION_NAME
+import de.yanneckreiss.kconmapper.processor.KCONMAPPER_FROM_CLASSES_ANNOTATION_ARG_NAME
+import de.yanneckreiss.kconmapper.processor.KCONMAP_FROM_TO_CLASSES_ANNOATATION_ARG_NAME
+import de.yanneckreiss.kconmapper.processor.extractKConMapAnnotation
 import de.yanneckreiss.kconmapper.processor.generator.MappingEnumClassGenerator
+import de.yanneckreiss.kconmapper.processor.logAndThrowError
 import de.yanneckreiss.kconmapper.processor.visitor.KCMVisitor.Companion.GENERATED_CLASS_SUFFIX
-import de.yanneckreiss.kconmapper.processor.visitor.KCMVisitor.Companion.KCONMAPPER_FROM_CLASSES_ANNOTATION_ARG_NAME
-import de.yanneckreiss.kconmapper.processor.visitor.KCMVisitor.Companion.KCONMAPPER_TARGET_CLASSES_ANNOTATION_ARG_NAME
 import de.yanneckreiss.kconmapper.processor.visitor.KCMVisitor.Companion.extractArgumentClasses
-import de.yanneckreiss.kconmapper.processor.visitor.KCMVisitor.Companion.extractKCMAnnotation
 
 class EnumClassVisitor(
     private val codeGenerator: CodeGenerator,
@@ -24,7 +25,9 @@ class EnumClassVisitor(
 ) : KSVisitorVoid() {
 
     override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
-        val kcmAnnotation: KSAnnotation = extractKCMAnnotation(logger, classDeclaration)
+        val kcmAnnotation: KSAnnotation = extractKConMapAnnotation(classDeclaration, logger)
+            ?: logger.logAndThrowError("Felix hats kaputt gemacht", classDeclaration)
+                .run { return } // TODO: KACKE
         val mapFromClasses: List<KSClassDeclaration> = extractArgumentClasses(
             resolver = resolver,
             kcmAnnotation = kcmAnnotation,
@@ -33,7 +36,7 @@ class EnumClassVisitor(
         val mapToClasses: List<KSClassDeclaration> = extractArgumentClasses(
             resolver = resolver,
             kcmAnnotation = kcmAnnotation,
-            paramName = KCONMAPPER_TARGET_CLASSES_ANNOTATION_ARG_NAME
+            paramName = KCONMAP_FROM_TO_CLASSES_ANNOATATION_ARG_NAME
         )
 
         // Nothing to do if none of the mapping arguments is filled
@@ -64,7 +67,7 @@ class EnumClassVisitor(
 
         codeGenerator.createNewFile(
             dependencies = Dependencies(true, classDeclaration.containingFile!!),
-            packageName = GENERATED_FILE_PATH,
+            packageName = classDeclaration.packageName.asString(),
             fileName = "${classDeclaration}$GENERATED_CLASS_SUFFIX"
         ).use { stream ->
             stream.write(fileSpec.build().toString().toByteArray())

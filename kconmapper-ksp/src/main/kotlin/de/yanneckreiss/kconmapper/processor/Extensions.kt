@@ -1,6 +1,7 @@
 package de.yanneckreiss.kconmapper.processor
 
 import com.google.devtools.ksp.processing.KSPLogger
+import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.*
 
 private const val NULLABLE_MARK = "?"
@@ -23,3 +24,16 @@ fun KSDeclaration.compareByQualifiedName(other: KSDeclaration): Boolean {
 }
 
 fun KSType.markedNullableAsString() = if (isMarkedNullable) NULLABLE_MARK else ""
+
+@Suppress("UNCHECKED_CAST")
+fun Resolver.extractArgumentClasses(
+    kcmAnnotation: KSAnnotation,
+    paramName: String
+): List<KSClassDeclaration> {
+    return kcmAnnotation
+        .arguments
+        .find { annotationArgument: KSValueArgument -> annotationArgument.name?.asString() == paramName }
+        ?.let { ksValueArgument -> ksValueArgument.value as List<KSType> }
+        ?.mapNotNull { argumentClassType -> this.getClassDeclarationByName(argumentClassType.declaration.qualifiedName!!) } // TODO: Check if !! is okay here
+        ?: emptyList()
+}
