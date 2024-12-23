@@ -1,7 +1,7 @@
 package entitysample.db
 
 import com.github.yanneckreiss.kconmapper.annotations.KConMapper
-import de.yanneckreiss.kconmapper.generated.toUserEntity
+import de.yanneckreiss.kconmapper.generated.toUpdateUserDTO
 import entitysample.dto.CreateUserDTO
 import entitysample.dto.UpdateUserDTO
 import entitysample.model.Address
@@ -12,12 +12,11 @@ import entitysample.model.Address
     toClasses = [CreateUserDTO::class, UpdateUserDTO::class]
 )
 data class UserEntity(
-    val uid: String = "SOME_UUID",
     val name: String,
     val address: Address,
 )
 
 fun a() {
-    val a = CreateUserDTO("name", Address("street", "zip", 1, "city"));
-    a.toUserEntity()
+    val a = UserEntity(name = "a", address = Address("a", "a", 1, "a"))
+    a.toUpdateUserDTO()
 }

@@ -28,8 +28,8 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(project(":kconmapper-annotations"))
+                kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
             }
-            kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
         }
     }
 }
