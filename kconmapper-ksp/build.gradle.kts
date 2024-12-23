@@ -9,7 +9,7 @@ kotlin {
     sourceSets {
         val jvmMain by getting {
             dependencies {
-                implementation("com.squareup:javapoet:1.12.1")
+                implementation("com.squareup:kotlinpoet:2.0.0")
                 implementation("com.google.devtools.ksp:symbol-processing-api:$kspVersion")
                 implementation(kotlin("stdlib"))
                 implementation(project(":kconmapper-annotations"))

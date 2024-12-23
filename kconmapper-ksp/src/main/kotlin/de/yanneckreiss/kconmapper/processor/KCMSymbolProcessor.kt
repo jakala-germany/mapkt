@@ -10,6 +10,7 @@ import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.validate
 import de.yanneckreiss.kconmapper.processor.common.KConMapperConfiguration
+import de.yanneckreiss.kconmapper.processor.visitor.EnumClassVisitor
 import de.yanneckreiss.kconmapper.processor.visitor.KCMVisitor
 
 private const val KCONMAPPER_PACKAGE_NAME = "com.github.yanneckreiss.kconmapper"
@@ -35,7 +36,6 @@ class KCMSymbolProcessor(
                 val classDeclaration: KSClassDeclaration = (ksAnnotated as KSClassDeclaration)
                 when (classDeclaration.classKind) {
                     ClassKind.INTERFACE,
-                    ClassKind.ENUM_CLASS,
                     ClassKind.ENUM_ENTRY,
                     ClassKind.OBJECT,
                     ClassKind.ANNOTATION_CLASS -> {
@@ -46,7 +46,18 @@ class KCMSymbolProcessor(
                         )
                     }
 
-                    else -> {
+                    ClassKind.ENUM_CLASS -> {
+                        val visitor = EnumClassVisitor(
+                            codeGenerator = codeGenerator,
+                            resolver = resolver,
+                            logger = logger,
+                        )
+                        ksAnnotated.accept(
+                            visitor = visitor,
+                            data = Unit
+                        )
+                    }
+                    ClassKind.CLASS -> {
                         val kcmVisitor = KCMVisitor(
                             codeGenerator = codeGenerator,
                             resolver = resolver,
