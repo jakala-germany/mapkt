@@ -229,7 +229,9 @@ class MappingFunctionGenerator(
         parameterTypeFromTargetClass: KSType,
         isGenericType: Boolean,
     ): Boolean {
-        if (parameterTypeFromSourceClass.isMarkedNullable && !parameterTypeFromTargetClass.isMarkedNullable) {
+        if (parameterTypeFromSourceClass.isMarkedNullable &&
+            !parameterTypeFromTargetClass.isMarkedNullable
+        ) {
             return false
         }
 
@@ -300,7 +302,10 @@ class MappingFunctionGenerator(
         this.declaration.qualifiedName?.asString() ==
             other.qualifiedName?.asString()
 
-    private fun KSDeclaration.getClassName(): ClassName = ClassName.bestGuess(this.qualifiedName?.asString() ?: "")
+    private fun KSDeclaration.getClassName(): ClassName =
+        ClassName.bestGuess(
+            this.qualifiedName?.asString() ?: "",
+        )
 
     private fun KSType.getName(): String = this.toTypeName().toString()
 

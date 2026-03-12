@@ -33,7 +33,8 @@ class MapKtSymbolProcessor(
                     -> {
                         logger.logAndThrowError(
                             errorMessage =
-                                "Cannot generate function for class `${classDeclaration.getName()}`, " +
+                                "Cannot generate function for " +
+                                    "class `${classDeclaration.getName()}`, " +
                                     "class type `${classDeclaration.classKind}` is not supported.",
                             targetClass = classDeclaration,
                         )

@@ -58,7 +58,9 @@ class MapKtClassVisitor(
 
         val (mappingFunctionGenerator, suffix) =
             when {
-                Modifier.SEALED in annotatedClass.modifiers -> MappingSealedClassGenerator to "Sealed"
+                Modifier.SEALED in annotatedClass.modifiers ->
+                    MappingSealedClassGenerator to
+                        "Sealed"
                 else -> MappingFunctionGenerator(resolver, logger) to "Class"
             }
 
