@@ -1,9 +1,7 @@
-val kspVersion: String by project
-
 plugins {
-    kotlin("multiplatform")
-    id("maven-publish")
+    alias(libs.plugins.multiplatform)
     alias(libs.plugins.ktlint)
+    id("maven-publish")
 }
 
 kotlin {
@@ -13,7 +11,7 @@ kotlin {
         val jvmMain by getting {
             dependencies {
                 implementation(libs.kotlinPoet)
-                implementation("com.google.devtools.ksp:symbol-processing-api:$kspVersion")
+                implementation(libs.ksp.processing.api)
                 implementation(kotlin("stdlib"))
                 implementation(project(":mapkt-annotations"))
             }

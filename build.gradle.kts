@@ -1,5 +1,8 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
-    kotlin("multiplatform") version "2.2.0"
+    alias(libs.plugins.ksp) apply false
+    alias(libs.plugins.multiplatform)
     id("maven-publish")
 }
 
@@ -19,13 +22,5 @@ allprojects {
 }
 
 kotlin {
-    jvm {
-        compilations.all {
-            compileTaskProvider {
-                compilerOptions {
-                    jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-                }
-            }
-        }
-    }
+    jvm()
 }
