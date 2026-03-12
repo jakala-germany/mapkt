@@ -27,8 +27,10 @@ fun Resolver.extractArgumentClasses(
 ): List<KSClassDeclaration> =
     kcmAnnotation
         .arguments
-        .find { annotationArgument: KSValueArgument -> annotationArgument.name?.asString() == paramName }
-        ?.let { ksValueArgument -> ksValueArgument.value as List<KSType> }
+        .find { annotationArgument: KSValueArgument ->
+            annotationArgument.name?.asString() ==
+                paramName
+        }?.let { ksValueArgument -> ksValueArgument.value as List<KSType> }
         ?.mapNotNull { argumentClassType ->
             this.getClassDeclarationByName(argumentClassType.declaration.qualifiedName!!)
         } // TODO: Check if !! is okay here

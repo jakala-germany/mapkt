@@ -27,7 +27,7 @@ code.
 ```kotlin
 // build.gradle.kts
 plugins {
-    id("com.google.devtools.ksp") version "2.2.0-2.0.2"
+    id("com.google.devtools.ksp") version "2.3.6"
 }
 
 dependencies {
