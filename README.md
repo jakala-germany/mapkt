@@ -3,7 +3,7 @@
 A Kotlin Multiplatform library that automatically generates type-safe mapping/conversion code
 between similar data classes using KSP (Kotlin Symbol Processing).
 
-Similar to [KConMapper](https://github.com/YanneckReiss/KConMapper) but with MultiPlattform support.
+Similar to [KConMapper](https://github.com/YanneckReiss/KConMapper) but with MultiPlatform support.
 
 ## What is MapKt?
 
@@ -43,26 +43,26 @@ Define two or more similar data classes with a shared mapping annotation:
 
 ```kotlin
 @MapKt(
-    mapTo = [Cat::class], // Map FROM Dog TO Cat
+    mapTo = [RemoteModel::class], // Map FROM Dog TO Cat
 )
-data class Dog(val name: String, val age: Int)
+data class SharedModel(val name: String, val age: Int)
 
 @MapKt(
-    mapTo = [Dog::class], // Map FROM Cat TO Dog  
+    mapTo = [SharedModel::class], // Map FROM Cat TO Dog  
 )
-data class Cat(val name: String, val age: Int)
+data class RemoteModel(val name: String, val age: Int)
 ```
 
 ### 3. Generate and Use Mapping Functions
 
 ```kotlin
-val dog = Dog("Fido", 5)
-val cat = Dog.toCat(dog)           // or dog.toCat()
-println(cat.name)                  // Output: Fido
-println(cat.age)                   // Output: 5
+val shared = SharedModel("Fido", 5)
+val remote = shared.toRemote()    
+println(remote.name)                  // Output: Fido
+println(remote.age)                   // Output: 5
 
 // Works in reverse!
-val convertedDog = Cat.toDog(cat)  
+val convertedDog = remote.toShared() 
 ```
 
 ## Annotations Reference
