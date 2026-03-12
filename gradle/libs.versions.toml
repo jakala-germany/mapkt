@@ -1,0 +1,9 @@
+[versions]
+ktlint = "14.1.0"
+kotlinPoet = "2.0.0"
+
+[libraries]
+kotlinPoet = { group = "com.squareup", name = "kotlinpoet", version.ref = "kotlinPoet" }
+
+[plugins]
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
