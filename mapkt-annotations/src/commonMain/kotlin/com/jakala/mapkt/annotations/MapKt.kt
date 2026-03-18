@@ -11,6 +11,7 @@ import kotlin.reflect.KClass
 annotation class MapKt(
     val mapTo: KClass<*>,
     val aliases: Array<PropertyMapping> = [],
+    val ignores: Array<String> = [],
 )
 
 /**

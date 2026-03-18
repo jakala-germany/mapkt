@@ -30,6 +30,7 @@ internal class MappingFunctionGenerator(
         sourceClass: KSClassDeclaration,
         targetClass: KSClassDeclaration,
         aliases: List<Alias>,
+        ignores: List<String>,
     ): FunSpec {
         val targetClassTypeParameters: List<KSTypeParameter> = targetClass.typeParameters
 
@@ -38,6 +39,7 @@ internal class MappingFunctionGenerator(
             annotatedClass = targetClass,
             targetClassTypeParameters = targetClassTypeParameters,
             aliases = aliases,
+            ignores = ignores,
         )
     }
 
@@ -47,6 +49,7 @@ internal class MappingFunctionGenerator(
         annotatedClass: KSClassDeclaration,
         targetClassTypeParameters: List<KSTypeParameter>,
         aliases: List<Alias>,
+        ignores: List<String>,
     ): FunSpec {
         val (missingConstructorArguments, matchingConstructorArguments) =
             extractMatchingAndMissingConstructorArguments(
@@ -71,12 +74,17 @@ internal class MappingFunctionGenerator(
         }
 
         missingConstructorArguments.forEach { param ->
+            val paramName = param.name!!.asString()
             functionBuilder.addParameter(
                 ParameterSpec
-                    .builder(param.name!!.asString(), param.type.resolve().toTypeName())
-                    .defaultValue(
-                        createDefaultBlock(param.name, sourceClass, aliases, param),
-                    ).build(),
+                    .builder(paramName, param.type.resolve().toTypeName())
+                    .apply {
+                        if (paramName !in ignores) {
+                            defaultValue(
+                                createDefaultBlock(param.name, sourceClass, aliases, param),
+                            )
+                        }
+                    }.build(),
             )
         }
 

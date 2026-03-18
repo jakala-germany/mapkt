@@ -109,6 +109,40 @@ data class Cat(
 
 This will generate mapping functions that correctly map `butlerCount` in `Cat` to `ownersCount` in `Dog`.
 
+### Parameter Ignoring
+
+By default, MapKt tries to map all properties. You can ignore specific properties if they don't have a corresponding match: (or if you just don't want them mapped)
+
+```kotlin
+@MapKt(
+    mapTo = Cat::class,
+    ignore = ["woofsPerSecond"] // This property will be ignored during mapping
+)
+data class Dog(
+    val name: String,
+    val age: Int,
+    val woofsPerSecond: Long, 
+)
+
+// region Generated Code
+
+// Generated function will look like this
+fun Dog.toCat(): Cat {
+    return Cat(
+        name = this.name,
+        age = this.age,
+    )
+}
+// And the reverse mapping will require you to set it as an parameter
+fun Cat.toDog(woofsPerSecond: Long): Dog {
+    return Dog(
+        name = this.name,
+        age = this.age,
+        woofsPerSecond = woofsPerSecond
+    )
+}
+```
+
 ## Project Structure
 
 ```

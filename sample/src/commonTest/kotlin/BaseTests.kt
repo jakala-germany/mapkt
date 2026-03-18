@@ -11,6 +11,7 @@ import com.jakala.mapkt.toLocalSuperModel
 import com.jakala.mapkt.toMappedEnumClass
 import com.jakala.mapkt.toRemoteSomeProperty
 import com.jakala.mapkt.toRemoteSuperModel
+import com.jakala.mapkt.toSomeProperty
 import com.jakala.mapkt.toSuperModel
 import com.jakala.mapkt.toSuperNestedModel
 import com.jakala.mapkt.toTestClassOne
@@ -33,6 +34,7 @@ import entitysample.dto.CreateUserDTO
 import entitysample.dto.UpdateUserDTO
 import entitysample.model.Address
 import entitysample.playground.defaults.MappedEnumSample
+import entitysample.properties.RemoteSomeProperty
 import entitysample.properties.SomeProperty
 import enumSample.EnumClass
 import enumSample.MappedEnumClass
@@ -279,12 +281,28 @@ class BaseTests {
             SomeProperty(
                 name = "Some name",
                 value = "Some value",
+                newValue = "Some new value",
             )
 
         val remoteSomeProperty = someProperty.toRemoteSomeProperty()
 
         assertEquals(remoteSomeProperty.fullName, someProperty.name)
         assertEquals(remoteSomeProperty.value, someProperty.value)
+    }
+
+    @Test
+    fun testIgnoredPropertyRequiresManualMapping() {
+        val remoteSomeProperty =
+            RemoteSomeProperty(
+                fullName = "Some name",
+                value = "Some value",
+            )
+
+        val someProperty = remoteSomeProperty.toSomeProperty("Some new value")
+
+        assertEquals(someProperty.name, remoteSomeProperty.fullName)
+        assertEquals(someProperty.value, remoteSomeProperty.value)
+        assertEquals(someProperty.newValue, "Some new value")
     }
 
     @Test
