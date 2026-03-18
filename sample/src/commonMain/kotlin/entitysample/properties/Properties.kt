@@ -8,7 +8,11 @@ import com.jakala.mapkt.annotations.PropertyMapping
     aliases = [
         PropertyMapping("name", "fullName"),
     ],
-    ignores = [ "newValue" ],
+    ignores = ["newValue"],
+)
+@MapKt(
+    mapTo = LocalSomeProperty::class,
+    ignores = ["dbId", "newValue"],
 )
 data class SomeProperty(
     val name: String,
@@ -21,10 +25,6 @@ data class RemoteSomeProperty(
     val value: String,
 )
 
-@MapKt(
-    mapTo = SomeProperty::class,
-    ignores = [ "dbId", "newValue" ],
-)
 data class LocalSomeProperty(
     val dbId: Long,
     val name: String,

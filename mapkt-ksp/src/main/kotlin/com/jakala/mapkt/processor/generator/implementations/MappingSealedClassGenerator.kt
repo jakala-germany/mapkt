@@ -1,8 +1,10 @@
-package com.jakala.mapkt.processor.generator
+package com.jakala.mapkt.processor.generator.implementations
 
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.jakala.mapkt.processor.Alias
-import com.jakala.mapkt.processor.MAP_KT_ANNOTATION_NAME
+import com.jakala.mapkt.processor.util.Alias
+import com.jakala.mapkt.processor.util.MAPKT_FROM_TO_CLASS_ANNOTATION_ARG_NAME
+import com.jakala.mapkt.processor.MAPKT_ANNOTATION_NAME
+import com.jakala.mapkt.processor.generator.FunctionGenerator
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FunSpec
 
@@ -35,11 +37,11 @@ internal object MappingSealedClassGenerator : FunctionGenerator {
 
         fun KSClassDeclaration.annotationValue() =
             this.annotations
-                .firstOrNull { it.shortName.asString() == MAP_KT_ANNOTATION_NAME }
+                .firstOrNull { it.shortName.asString() == MAPKT_ANNOTATION_NAME }
                 ?.arguments
                 ?.get(0)
                 ?.let {
-                    if (it.name?.asString() == ANNOTATION_MAP_TO_PARAM_NAME) {
+                    if (it.name?.asString() == MAPKT_FROM_TO_CLASS_ANNOTATION_ARG_NAME) {
                         it.value
                             .toString()
                             .removePrefix("[")
@@ -80,6 +82,4 @@ internal object MappingSealedClassGenerator : FunctionGenerator {
 
         return funBuilder.build()
     }
-
-    private const val ANNOTATION_MAP_TO_PARAM_NAME = "mapTo"
 }
