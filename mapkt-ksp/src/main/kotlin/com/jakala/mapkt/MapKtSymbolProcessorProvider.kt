@@ -5,7 +5,7 @@ import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.jakala.mapkt.processor.MapKtSymbolProcessor
 
-class MapKtSymbolProcessorProvider : SymbolProcessorProvider {
+public class MapKtSymbolProcessorProvider : SymbolProcessorProvider {
     override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
         environment.options
         return MapKtSymbolProcessor(

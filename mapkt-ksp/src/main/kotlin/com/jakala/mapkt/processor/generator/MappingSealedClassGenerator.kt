@@ -1,14 +1,16 @@
 package com.jakala.mapkt.processor.generator
 
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.jakala.mapkt.processor.Alias
 import com.jakala.mapkt.processor.MAP_KT_ANNOTATION_NAME
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FunSpec
 
-object MappingSealedClassGenerator : FunctionGenerator {
+internal object MappingSealedClassGenerator : FunctionGenerator {
     override fun generateMappingFunction(
         sourceClass: KSClassDeclaration,
         targetClass: KSClassDeclaration,
+        aliases: List<Alias>,
     ): FunSpec {
         val subclasses = sourceClass.getSealedSubclasses()
         val targetSubclasses = targetClass.getSealedSubclasses()

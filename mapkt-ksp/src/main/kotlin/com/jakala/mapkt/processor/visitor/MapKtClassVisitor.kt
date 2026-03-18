@@ -10,15 +10,16 @@ import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.google.devtools.ksp.symbol.Modifier
 import com.jakala.mapkt.processor.MAPKT_FROM_TO_CLASSES_ANNOTATION_ARG_NAME
 import com.jakala.mapkt.processor.TARGET_PACKAGE_NAME
-import com.jakala.mapkt.processor.extractArgumentClasses
+import com.jakala.mapkt.processor.extractArgumentClass
 import com.jakala.mapkt.processor.extractMapKtAnnotation
 import com.jakala.mapkt.processor.generateFileName
 import com.jakala.mapkt.processor.generator.MappingFunctionGenerator
 import com.jakala.mapkt.processor.generator.MappingSealedClassGenerator
+import com.jakala.mapkt.processor.getAliases
 import com.squareup.kotlinpoet.FileSpec
 import java.io.OutputStream
 
-class MapKtClassVisitor(
+internal class MapKtClassVisitor(
     private val codeGenerator: CodeGenerator,
     private val resolver: Resolver,
     private val logger: KSPLogger,
@@ -28,24 +29,38 @@ class MapKtClassVisitor(
         data: Unit,
     ) {
         val annotatedClass: KSClassDeclaration = classDeclaration
-        val kcmAnnotation: KSAnnotation? =
+        val kcmAnnotation: List<KSAnnotation> =
             extractMapKtAnnotation(
                 targetClass = annotatedClass,
                 logger = logger,
             )
 
-        if (kcmAnnotation == null) {
+        if (kcmAnnotation.isEmpty()) {
             logger.warn("Missing annotation for class $annotatedClass.")
             return
         }
 
-        val mapToClasses =
-            resolver.extractArgumentClasses(
+        kcmAnnotation.forEach { annotation ->
+            generateMapFunction(
+                classDeclaration = classDeclaration,
+                annotatedClass = annotatedClass,
+                kcmAnnotation = annotation,
+            )
+        }
+    }
+
+    fun generateMapFunction(
+        classDeclaration: KSClassDeclaration,
+        annotatedClass: KSClassDeclaration,
+        kcmAnnotation: KSAnnotation,
+    ) {
+        val mapToClass =
+            resolver.extractArgumentClass(
                 kcmAnnotation,
                 MAPKT_FROM_TO_CLASSES_ANNOTATION_ARG_NAME,
             )
         // Nothing to do if none of the mapping arguments is filled
-        if (mapToClasses.isEmpty()) {
+        if (mapToClass == null) {
             logger.warn("Missing mapping functions for annotated class $annotatedClass.")
             return
         }
@@ -61,29 +76,35 @@ class MapKtClassVisitor(
                 Modifier.SEALED in annotatedClass.modifiers ->
                     MappingSealedClassGenerator to
                         "Sealed"
+
                 else -> MappingFunctionGenerator(resolver, logger) to "Class"
             }
 
-        mapToClasses.forEach {
-            fileSpec.addFunction(
-                mappingFunctionGenerator.generateMappingFunction(
-                    targetClass = annotatedClass,
-                    sourceClass = it,
-                ),
-            )
-            fileSpec.addFunction(
-                mappingFunctionGenerator.generateMappingFunction(
-                    targetClass = it,
-                    sourceClass = annotatedClass,
-                ),
-            )
-        }
+        val aliases = classDeclaration.getAliases()
+        fileSpec.addFunction(
+            mappingFunctionGenerator.generateMappingFunction(
+                targetClass = annotatedClass,
+                sourceClass = mapToClass,
+                aliases = aliases,
+            ),
+        )
+        fileSpec.addFunction(
+            mappingFunctionGenerator.generateMappingFunction(
+                targetClass = mapToClass,
+                sourceClass = annotatedClass,
+                aliases = aliases,
+            ),
+        )
 
         codeGenerator
             .createNewFile(
                 dependencies = Dependencies(true, classDeclaration.containingFile!!),
                 packageName = TARGET_PACKAGE_NAME,
-                fileName = generateFileName(classDeclaration) + GENERATED_CLASS_SUFFIX + suffix,
+                fileName =
+                    generateFileName(classDeclaration)
+                        .plus(mapToClass.simpleName.asString())
+                        .plus(GENERATED_CLASS_SUFFIX)
+                        .plus(suffix),
             ).use { generatedFileOutputStream: OutputStream ->
                 generatedFileOutputStream.write(fileSpec.build().toString().toByteArray())
             }

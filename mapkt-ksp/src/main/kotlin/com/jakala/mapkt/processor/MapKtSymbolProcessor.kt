@@ -12,12 +12,12 @@ import com.jakala.mapkt.annotations.MapKt
 import com.jakala.mapkt.processor.visitor.MapKtClassVisitor
 import com.jakala.mapkt.processor.visitor.MapKtEnumClassVisitor
 
-const val TARGET_PACKAGE_NAME = "com.jakala.mapkt"
-const val MAP_KT_ANNOTATION_NAME = "MapKt"
+internal const val TARGET_PACKAGE_NAME = "com.jakala.mapkt"
+internal const val MAP_KT_ANNOTATION_NAME = "MapKt"
 
-class MapKtSymbolProcessor(
-    val codeGenerator: CodeGenerator,
-    val logger: KSPLogger,
+public class MapKtSymbolProcessor(
+    private val codeGenerator: CodeGenerator,
+    private val logger: KSPLogger,
 ) : SymbolProcessor {
     override fun process(resolver: Resolver): List<KSAnnotated> {
         resolver

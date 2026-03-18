@@ -1,11 +1,13 @@
 package com.jakala.mapkt.processor.generator
 
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.jakala.mapkt.processor.Alias
 import com.squareup.kotlinpoet.FunSpec
 
-interface FunctionGenerator {
+internal interface FunctionGenerator {
     fun generateMappingFunction(
         sourceClass: KSClassDeclaration,
         targetClass: KSClassDeclaration,
+        aliases: List<Alias> = emptyList(),
     ): FunSpec
 }

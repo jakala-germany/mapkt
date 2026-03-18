@@ -9,14 +9,14 @@ import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.jakala.mapkt.processor.MAPKT_FROM_TO_CLASSES_ANNOTATION_ARG_NAME
 import com.jakala.mapkt.processor.TARGET_PACKAGE_NAME
-import com.jakala.mapkt.processor.extractArgumentClasses
+import com.jakala.mapkt.processor.extractArgumentClass
 import com.jakala.mapkt.processor.extractMapKtAnnotation
 import com.jakala.mapkt.processor.generateFileName
 import com.jakala.mapkt.processor.generator.MappingEnumClassGenerator
 import com.jakala.mapkt.processor.visitor.MapKtClassVisitor.Companion.GENERATED_CLASS_SUFFIX
 import com.squareup.kotlinpoet.FileSpec
 
-class MapKtEnumClassVisitor(
+internal class MapKtEnumClassVisitor(
     private val codeGenerator: CodeGenerator,
     private val resolver: Resolver,
     private val logger: KSPLogger,
@@ -25,26 +25,37 @@ class MapKtEnumClassVisitor(
         classDeclaration: KSClassDeclaration,
         data: Unit,
     ) {
-        val kcmAnnotation: KSAnnotation? =
+        val kcmAnnotation: List<KSAnnotation> =
             extractMapKtAnnotation(
                 targetClass = classDeclaration,
                 logger = logger,
             )
 
-        if (kcmAnnotation == null) {
+        if (kcmAnnotation.isEmpty()) {
             logger.warn("Missing annotation for class $classDeclaration.")
             return
         }
+        kcmAnnotation.forEach {
+            generateMapFunction(
+                classDeclaration = classDeclaration,
+                kcmAnnotation = it,
+            )
+        }
+    }
 
+    fun generateMapFunction(
+        classDeclaration: KSClassDeclaration,
+        kcmAnnotation: KSAnnotation,
+    ) {
         // Nothing to do if none of the mapping arguments is filled
-        val mappingTargets =
-            resolver.extractArgumentClasses(
+        val mappingTarget =
+            resolver.extractArgumentClass(
                 kcmAnnotation,
                 MAPKT_FROM_TO_CLASSES_ANNOTATION_ARG_NAME,
             )
 
         // Nothing to do if none of the mapping arguments is filled
-        if (mappingTargets.isEmpty()) {
+        if (mappingTarget == null) {
             logger.warn("Missing mapping functions for annotated class $classDeclaration.")
             return
         }
@@ -55,26 +66,27 @@ class MapKtEnumClassVisitor(
                 fileName = classDeclaration.simpleName.asString(),
             )
 
-        mappingTargets.forEach {
-            fileSpec.addFunction(
-                MappingEnumClassGenerator.generateMappingFunction(
-                    targetClass = classDeclaration,
-                    sourceClass = it,
-                ),
-            )
-            fileSpec.addFunction(
-                MappingEnumClassGenerator.generateMappingFunction(
-                    targetClass = it,
-                    sourceClass = classDeclaration,
-                ),
-            )
-        }
+        fileSpec.addFunction(
+            MappingEnumClassGenerator.generateMappingFunction(
+                targetClass = classDeclaration,
+                sourceClass = mappingTarget,
+            ),
+        )
+        fileSpec.addFunction(
+            MappingEnumClassGenerator.generateMappingFunction(
+                targetClass = mappingTarget,
+                sourceClass = classDeclaration,
+            ),
+        )
 
         codeGenerator
             .createNewFile(
                 dependencies = Dependencies(true, classDeclaration.containingFile!!),
                 packageName = TARGET_PACKAGE_NAME,
-                fileName = generateFileName(classDeclaration) + GENERATED_CLASS_SUFFIX,
+                fileName =
+                    generateFileName(classDeclaration)
+                        .plus(mappingTarget.simpleName.asString())
+                        .plus(GENERATED_CLASS_SUFFIX),
             ).use { stream ->
                 stream.write(fileSpec.build().toString().toByteArray())
             }

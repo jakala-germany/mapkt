@@ -4,13 +4,14 @@ import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getKotlinClassByName
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
-import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSDeclaration
+import com.google.devtools.ksp.symbol.KSName
 import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.KSTypeArgument
 import com.google.devtools.ksp.symbol.KSTypeParameter
 import com.google.devtools.ksp.symbol.KSValueParameter
+import com.jakala.mapkt.processor.Alias
 import com.jakala.mapkt.processor.generator.argument.MatchingArgument
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
@@ -21,16 +22,14 @@ import com.squareup.kotlinpoet.STAR
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeVariableName
 
-private const val MAP_KT_PROPERTY_ANNOTATION_NAME = "MapKtProperty"
-private const val MAP_KT_PROPERTY_ANNOTATION_PARAM_NAME_ALIASES = "aliases"
-
-class MappingFunctionGenerator(
+internal class MappingFunctionGenerator(
     private val resolver: Resolver,
     private val logger: KSPLogger,
 ) : FunctionGenerator {
     override fun generateMappingFunction(
         sourceClass: KSClassDeclaration,
         targetClass: KSClassDeclaration,
+        aliases: List<Alias>,
     ): FunSpec {
         val targetClassTypeParameters: List<KSTypeParameter> = targetClass.typeParameters
 
@@ -38,6 +37,7 @@ class MappingFunctionGenerator(
             sourceClass = sourceClass,
             annotatedClass = targetClass,
             targetClassTypeParameters = targetClassTypeParameters,
+            aliases = aliases,
         )
     }
 
@@ -46,12 +46,14 @@ class MappingFunctionGenerator(
         sourceClass: KSClassDeclaration,
         annotatedClass: KSClassDeclaration,
         targetClassTypeParameters: List<KSTypeParameter>,
+        aliases: List<Alias>,
     ): FunSpec {
         val (missingConstructorArguments, matchingConstructorArguments) =
             extractMatchingAndMissingConstructorArguments(
                 annotatedClass = annotatedClass,
                 sourceClass = sourceClass,
                 targetClassTypeParameters = targetClassTypeParameters,
+                aliases = aliases,
             )
 
         val functionBuilder =
@@ -73,60 +75,7 @@ class MappingFunctionGenerator(
                 ParameterSpec
                     .builder(param.name!!.asString(), param.type.resolve().toTypeName())
                     .defaultValue(
-                        CodeBlock
-                            .builder()
-                            .apply {
-                                val targetName = param.name!!.asString()
-
-                                val sourceProperty =
-                                    sourceClass.getAllProperties().firstOrNull { prop ->
-                                        val propName = prop.simpleName.asString()
-                                        val aliases = findAliases(prop.annotations)
-
-                                        propName == targetName || aliases.contains(targetName)
-                                    }
-
-                                val sourceName =
-                                    sourceProperty?.simpleName?.asString() ?: targetName
-
-                                add("this.%L", sourceName)
-
-                                if (param.type.resolve().isMarkedNullable) {
-                                    add("?")
-                                }
-
-                                val isList =
-                                    param.type
-                                        .resolve()
-                                        .arguments
-                                        .takeIf { it.isNotEmpty() }
-                                        ?.let {
-                                            val collection =
-                                                resolver
-                                                    .getKotlinClassByName("kotlin.collections.List")
-                                                    ?.asType(it)
-                                                    ?.apply {
-                                                        if (param.type.resolve().isMarkedNullable) {
-                                                            makeNullable()
-                                                        }
-                                                    }
-
-                                            param.type.resolve().isAssignableFrom(collection!!)
-                                        } ?: false
-
-                                if (isList) {
-                                    add(
-                                        ".map{ it.to%L() }",
-                                        param.type
-                                            .resolve()
-                                            .arguments
-                                            .first()
-                                            .type!!,
-                                    )
-                                } else {
-                                    add(".to%L()", param.type.toString().replace("?", ""))
-                                }
-                            }.build(),
+                        createDefaultBlock(param.name, sourceClass, aliases, param),
                     ).build(),
             )
         }
@@ -163,26 +112,122 @@ class MappingFunctionGenerator(
         return functionBuilder.build()
     }
 
+    @OptIn(KspExperimental::class)
+    private fun createDefaultBlock(
+        name: KSName?,
+        sourceClass: KSClassDeclaration,
+        aliases: List<Alias>,
+        param: KSValueParameter,
+    ): CodeBlock =
+        CodeBlock
+            .builder()
+            .apply {
+                val targetName = name!!.asString()
+
+                val sourceProperty =
+                    sourceClass.getAllProperties().firstOrNull { prop ->
+                        val propName = prop.simpleName.asString()
+
+                        fun Alias.sourceFitsProp() = source == propName && target == targetName
+
+                        fun Alias.targetFitsProp() = target == propName && source == targetName
+
+                        propName == targetName ||
+                            aliases.any { alias ->
+                                alias.sourceFitsProp() || alias.targetFitsProp()
+                            }
+                    }
+
+                val sourceName = sourceProperty?.simpleName?.asString() ?: targetName
+
+                add("this.%L", sourceName)
+
+                if (param.type.resolve().isMarkedNullable) {
+                    add("?")
+                }
+
+                val isList =
+                    param.type
+                        .resolve()
+                        .arguments
+                        .takeIf { it.isNotEmpty() }
+                        ?.let {
+                            val collection =
+                                resolver
+                                    .getKotlinClassByName("kotlin.collections.List")
+                                    ?.asType(it)
+                                    ?.apply {
+                                        if (param.type.resolve().isMarkedNullable) {
+                                            makeNullable()
+                                        }
+                                    }
+
+                            param.type.resolve().isAssignableFrom(collection!!)
+                        } ?: false
+
+                if (isList) {
+                    add(
+                        ".map{ it.to%L() }",
+                        param.type
+                            .resolve()
+                            .arguments
+                            .first()
+                            .type!!,
+                    )
+                } else {
+                    add(".to%L()", param.type.toString().replace("?", ""))
+                }
+            }.build()
+
     private fun extractMatchingAndMissingConstructorArguments(
         annotatedClass: KSClassDeclaration,
         sourceClass: KSClassDeclaration,
         targetClassTypeParameters: List<KSTypeParameter>,
+        aliases: List<Alias>,
     ): Pair<MutableList<KSValueParameter>, MutableList<MatchingArgument>> {
         val missingArguments = mutableListOf<KSValueParameter>()
         val matchingArguments = mutableListOf<MatchingArgument>()
 
         annotatedClass.primaryConstructor?.parameters?.forEach { annotatedClassParam ->
 
-            val targetPropName = annotatedClassParam.name!!.asString()
+            var targetPropName = annotatedClassParam.name!!.asString()
             var matchingArgument: MatchingArgument? = null
 
             for (sourceProp in sourceClass.getAllProperties()) {
-                val sourcePropName = sourceProp.simpleName.asString()
-                val sourceAliases = findAliases(sourceProp.annotations)
+                var sourcePropName = sourceProp.simpleName.asString()
+                val targetMatchesTarget =
+                    aliases.any { mapping ->
+                        mapping.target == targetPropName && mapping.source == sourcePropName
+                    }
 
-                val aliasMatch = sourceAliases.contains(targetPropName)
+                val targetMatchesSource =
+                    aliases.any { mapping ->
+                        mapping.target == sourcePropName && mapping.source == targetPropName
+                    }
 
-                if (sourcePropName == targetPropName || aliasMatch) {
+                if (sourcePropName == targetPropName ||
+                    targetMatchesSource ||
+                    targetMatchesTarget
+                ) {
+                    if (targetMatchesSource) {
+                        // Replace with the mapping target name if an alias is found
+                        val matchingAlias =
+                            aliases.first { mapping ->
+                                mapping.target == sourcePropName &&
+                                    mapping.source == targetPropName
+                            }
+                        targetPropName = matchingAlias.source
+                        sourcePropName = matchingAlias.target
+                    } else if (targetMatchesTarget) {
+                        // Replace with the mapping target name if an alias is found
+                        val matchingAlias =
+                            aliases.first { mapping ->
+                                mapping.target == targetPropName &&
+                                    mapping.source == sourcePropName
+                            }
+                        targetPropName = matchingAlias.target
+                        sourcePropName = matchingAlias.source
+                    }
                     val acPropType: KSType = annotatedClassParam.type.resolve()
                     val sourcePropType: KSType = sourceProp.type.resolve()
 
@@ -267,18 +312,6 @@ class MappingFunctionGenerator(
         val targetClassName: String = targetClass.simpleName.getShortName()
         return "to$targetClassName"
     }
-
-    private fun findAliases(annotations: Sequence<KSAnnotation>): Set<String> =
-        annotations
-            .filter { it.shortName.asString() == MAP_KT_PROPERTY_ANNOTATION_NAME }
-            .flatMap { it.arguments }
-            .filter { it.name?.asString() == MAP_KT_PROPERTY_ANNOTATION_PARAM_NAME_ALIASES }
-            .mapNotNull { arg ->
-                when (val value = arg.value) {
-                    is Collection<*> -> value.filterIsInstance<String>().toSet()
-                    else -> null
-                }
-            }.fold(emptySet()) { acc, set -> acc + set }
 
     private fun KSType.toTypeName(): TypeName {
         val className =
