@@ -1,15 +1,15 @@
 [versions]
-ktlint = "14.2.0"
-kotlinPoet = "2.3.0"
+ktlintVersion = "14.2.0"
+kotlinPoetVersion = "2.3.0"
 kspVersion = "2.3.6"
 multiplatformVersion = "2.3.21"
 
 [libraries]
-kotlinPoet = { group = "com.squareup", name = "kotlinpoet", version.ref = "kotlinPoet" }
+kotlinPoet = { group = "com.squareup", name = "kotlinpoet", version.ref = "kotlinPoetVersion" }
 ksp-processing-api = { group = "com.google.devtools.ksp", name = "symbol-processing-api", version.ref = "kspVersion" }
 
 [plugins]
-ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintVersion" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "kspVersion" }
 multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "multiplatformVersion" }
 publish = { id = "com.vanniktech.maven.publish", version = "0.36.0" }
