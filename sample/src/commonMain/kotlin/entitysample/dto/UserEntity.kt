@@ -1,8 +1,6 @@
-package entitysample.db
+package entitysample.dto
 
 import com.jakala.mapkt.annotations.MapKt
-import entitysample.dto.CreateUserDTO
-import entitysample.dto.UpdateUserDTO
 import entitysample.model.Address
 
 @MapKt(mapTo = CreateUserDTO::class)

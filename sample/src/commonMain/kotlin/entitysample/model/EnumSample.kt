@@ -1,4 +1,4 @@
-package entitysample.playground.defaults
+package entitysample.model
 
 enum class EnumSample {
     FIRST,

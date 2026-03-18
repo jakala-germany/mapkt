@@ -1,7 +1,6 @@
 package enumSample
 
 import com.jakala.mapkt.annotations.MapKt
-import com.jakala.mapkt.toMappedEnumClass
 
 @MapKt(mapTo = MappedEnumClass::class)
 enum class EnumClass {
@@ -16,8 +15,4 @@ enum class MappedEnumClass {
     SECOND,
     THIRD,
     FOURTH,
-}
-
-fun test() {
-    EnumClass.FOURTH.toMappedEnumClass()
 }

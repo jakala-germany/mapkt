@@ -2,8 +2,8 @@ package com.jakala.mapkt.processor.generator.implementations
 
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.jakala.mapkt.processor.util.Alias
 import com.jakala.mapkt.processor.generator.FunctionGenerator
+import com.jakala.mapkt.processor.util.Alias
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FunSpec
 

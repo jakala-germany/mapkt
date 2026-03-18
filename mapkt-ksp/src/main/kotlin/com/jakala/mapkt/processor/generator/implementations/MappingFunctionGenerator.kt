@@ -11,9 +11,9 @@ import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.KSTypeArgument
 import com.google.devtools.ksp.symbol.KSTypeParameter
 import com.google.devtools.ksp.symbol.KSValueParameter
-import com.jakala.mapkt.processor.util.Alias
 import com.jakala.mapkt.processor.generator.FunctionGenerator
 import com.jakala.mapkt.processor.generator.argument.MatchingArgument
+import com.jakala.mapkt.processor.util.Alias
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FunSpec
@@ -81,7 +81,9 @@ internal class MappingFunctionGenerator(
                     .builder(paramName, param.type.resolve().toTypeName())
                     .run {
                         if (paramName == "dbId") {
-                            logger.warn("Processing parameter $paramName with ${ignores.joinToString()}")
+                            logger.warn(
+                                "Processing parameter $paramName with ${ignores.joinToString()}",
+                            )
                         }
                         if (paramName !in ignores) {
                             this.defaultValue(

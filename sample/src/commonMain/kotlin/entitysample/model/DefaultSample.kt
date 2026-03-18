@@ -1,4 +1,4 @@
-package entitysample.playground.defaults
+package entitysample.model
 
 data class DefaultSample(
     val intValue: Int,
