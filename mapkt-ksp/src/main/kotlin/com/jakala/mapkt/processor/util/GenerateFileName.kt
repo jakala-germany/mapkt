@@ -1,4 +1,4 @@
-package com.jakala.mapkt.processor
+package com.jakala.mapkt.processor.util
 
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 

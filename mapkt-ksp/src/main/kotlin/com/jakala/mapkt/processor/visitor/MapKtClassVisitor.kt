@@ -8,15 +8,15 @@ import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.google.devtools.ksp.symbol.Modifier
-import com.jakala.mapkt.processor.MAPKT_FROM_TO_CLASSES_ANNOTATION_ARG_NAME
+import com.jakala.mapkt.processor.util.MAPKT_FROM_TO_CLASS_ANNOTATION_ARG_NAME
 import com.jakala.mapkt.processor.TARGET_PACKAGE_NAME
-import com.jakala.mapkt.processor.extractArgumentClass
-import com.jakala.mapkt.processor.extractMapKtAnnotation
-import com.jakala.mapkt.processor.generateFileName
-import com.jakala.mapkt.processor.generator.MappingFunctionGenerator
-import com.jakala.mapkt.processor.generator.MappingSealedClassGenerator
-import com.jakala.mapkt.processor.getAliases
-import com.jakala.mapkt.processor.getIgnores
+import com.jakala.mapkt.processor.extensions.extractArgumentClass
+import com.jakala.mapkt.processor.util.extractMapKtAnnotation
+import com.jakala.mapkt.processor.util.generateFileName
+import com.jakala.mapkt.processor.generator.implementations.MappingFunctionGenerator
+import com.jakala.mapkt.processor.generator.implementations.MappingSealedClassGenerator
+import com.jakala.mapkt.processor.extensions.getAliases
+import com.jakala.mapkt.processor.extensions.getIgnores
 import com.squareup.kotlinpoet.FileSpec
 import java.io.OutputStream
 
@@ -58,7 +58,7 @@ internal class MapKtClassVisitor(
         val mapToClass =
             resolver.extractArgumentClass(
                 kcmAnnotation,
-                MAPKT_FROM_TO_CLASSES_ANNOTATION_ARG_NAME,
+                MAPKT_FROM_TO_CLASS_ANNOTATION_ARG_NAME,
             )
         // Nothing to do if none of the mapping arguments is filled
         if (mapToClass == null) {
@@ -81,8 +81,8 @@ internal class MapKtClassVisitor(
                 else -> MappingFunctionGenerator(resolver, logger) to "Class"
             }
 
-        val aliases = classDeclaration.getAliases()
-        val ignores = classDeclaration.getIgnores()
+        val aliases = kcmAnnotation.getAliases()
+        val ignores = kcmAnnotation.getIgnores()
         fileSpec.addFunction(
             mappingFunctionGenerator.generateMappingFunction(
                 targetClass = annotatedClass,

@@ -1,7 +1,7 @@
 package com.jakala.mapkt.processor.generator
 
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.jakala.mapkt.processor.Alias
+import com.jakala.mapkt.processor.util.Alias
 import com.squareup.kotlinpoet.FunSpec
 
 internal interface FunctionGenerator {

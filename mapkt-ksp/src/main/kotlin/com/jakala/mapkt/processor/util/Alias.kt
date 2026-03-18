@@ -1,4 +1,4 @@
-package com.jakala.mapkt.processor
+package com.jakala.mapkt.processor.util
 
 internal data class Alias(
     val source: String,

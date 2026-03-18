@@ -13,14 +13,3 @@ annotation class MapKt(
     val aliases: Array<PropertyMapping> = [],
     val ignores: Array<String> = [],
 )
-
-/**
- * class for property mappings
- *
- * @param src the source property name
- * @param tar the target property name
- */
-annotation class PropertyMapping(
-    val src: String,
-    val tar: String,
-)

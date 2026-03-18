@@ -1,4 +1,4 @@
-package com.jakala.mapkt.processor.generator
+package com.jakala.mapkt.processor.generator.implementations
 
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getKotlinClassByName
@@ -11,7 +11,8 @@ import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.KSTypeArgument
 import com.google.devtools.ksp.symbol.KSTypeParameter
 import com.google.devtools.ksp.symbol.KSValueParameter
-import com.jakala.mapkt.processor.Alias
+import com.jakala.mapkt.processor.util.Alias
+import com.jakala.mapkt.processor.generator.FunctionGenerator
 import com.jakala.mapkt.processor.generator.argument.MatchingArgument
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
@@ -78,11 +79,16 @@ internal class MappingFunctionGenerator(
             functionBuilder.addParameter(
                 ParameterSpec
                     .builder(paramName, param.type.resolve().toTypeName())
-                    .apply {
+                    .run {
+                        if (paramName == "dbId") {
+                            logger.warn("Processing parameter $paramName with ${ignores.joinToString()}")
+                        }
                         if (paramName !in ignores) {
-                            defaultValue(
+                            this.defaultValue(
                                 createDefaultBlock(param.name, sourceClass, aliases, param),
                             )
+                        } else {
+                            this
                         }
                     }.build(),
             )

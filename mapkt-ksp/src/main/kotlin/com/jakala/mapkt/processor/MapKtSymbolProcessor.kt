@@ -9,11 +9,13 @@ import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.validate
 import com.jakala.mapkt.annotations.MapKt
+import com.jakala.mapkt.processor.extensions.getName
+import com.jakala.mapkt.processor.extensions.logAndThrowError
 import com.jakala.mapkt.processor.visitor.MapKtClassVisitor
 import com.jakala.mapkt.processor.visitor.MapKtEnumClassVisitor
 
 internal const val TARGET_PACKAGE_NAME = "com.jakala.mapkt"
-internal const val MAP_KT_ANNOTATION_NAME = "MapKt"
+internal const val MAPKT_ANNOTATION_NAME = "MapKt"
 
 public class MapKtSymbolProcessor(
     private val codeGenerator: CodeGenerator,

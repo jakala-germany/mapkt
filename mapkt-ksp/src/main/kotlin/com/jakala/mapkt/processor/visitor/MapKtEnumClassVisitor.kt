@@ -7,12 +7,12 @@ import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
-import com.jakala.mapkt.processor.MAPKT_FROM_TO_CLASSES_ANNOTATION_ARG_NAME
+import com.jakala.mapkt.processor.util.MAPKT_FROM_TO_CLASS_ANNOTATION_ARG_NAME
 import com.jakala.mapkt.processor.TARGET_PACKAGE_NAME
-import com.jakala.mapkt.processor.extractArgumentClass
-import com.jakala.mapkt.processor.extractMapKtAnnotation
-import com.jakala.mapkt.processor.generateFileName
-import com.jakala.mapkt.processor.generator.MappingEnumClassGenerator
+import com.jakala.mapkt.processor.extensions.extractArgumentClass
+import com.jakala.mapkt.processor.util.extractMapKtAnnotation
+import com.jakala.mapkt.processor.util.generateFileName
+import com.jakala.mapkt.processor.generator.implementations.MappingEnumClassGenerator
 import com.jakala.mapkt.processor.visitor.MapKtClassVisitor.Companion.GENERATED_CLASS_SUFFIX
 import com.squareup.kotlinpoet.FileSpec
 
@@ -51,7 +51,7 @@ internal class MapKtEnumClassVisitor(
         val mappingTarget =
             resolver.extractArgumentClass(
                 kcmAnnotation,
-                MAPKT_FROM_TO_CLASSES_ANNOTATION_ARG_NAME,
+                MAPKT_FROM_TO_CLASS_ANNOTATION_ARG_NAME,
             )
 
         // Nothing to do if none of the mapping arguments is filled
