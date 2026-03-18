@@ -16,6 +16,7 @@ import com.jakala.mapkt.processor.generateFileName
 import com.jakala.mapkt.processor.generator.MappingFunctionGenerator
 import com.jakala.mapkt.processor.generator.MappingSealedClassGenerator
 import com.jakala.mapkt.processor.getAliases
+import com.jakala.mapkt.processor.getIgnores
 import com.squareup.kotlinpoet.FileSpec
 import java.io.OutputStream
 
@@ -81,11 +82,13 @@ internal class MapKtClassVisitor(
             }
 
         val aliases = classDeclaration.getAliases()
+        val ignores = classDeclaration.getIgnores()
         fileSpec.addFunction(
             mappingFunctionGenerator.generateMappingFunction(
                 targetClass = annotatedClass,
                 sourceClass = mapToClass,
                 aliases = aliases,
+                ignores = ignores,
             ),
         )
         fileSpec.addFunction(
@@ -93,6 +96,7 @@ internal class MapKtClassVisitor(
                 targetClass = mapToClass,
                 sourceClass = annotatedClass,
                 aliases = aliases,
+                ignores = ignores,
             ),
         )
 

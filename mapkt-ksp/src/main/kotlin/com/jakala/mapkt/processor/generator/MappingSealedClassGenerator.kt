@@ -11,6 +11,7 @@ internal object MappingSealedClassGenerator : FunctionGenerator {
         sourceClass: KSClassDeclaration,
         targetClass: KSClassDeclaration,
         aliases: List<Alias>,
+        ignores: List<String>,
     ): FunSpec {
         val subclasses = sourceClass.getSealedSubclasses()
         val targetSubclasses = targetClass.getSealedSubclasses()

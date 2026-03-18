@@ -9,5 +9,6 @@ internal interface FunctionGenerator {
         sourceClass: KSClassDeclaration,
         targetClass: KSClassDeclaration,
         aliases: List<Alias> = emptyList(),
+        ignores: List<String> = emptyList(),
     ): FunSpec
 }

@@ -6,6 +6,7 @@ import com.google.devtools.ksp.symbol.KSClassDeclaration
 
 internal const val MAPKT_FROM_TO_CLASSES_ANNOTATION_ARG_NAME: String = "mapTo"
 internal const val MAPKT_ALIASES_ANNOTATION_ARG_NAME: String = "aliases"
+internal const val MAPKT_IGNORES_ANNOTATION_ARG_NAME: String = "ignores"
 
 internal fun extractMapKtAnnotation(
     targetClass: KSClassDeclaration,

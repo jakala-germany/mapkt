@@ -11,6 +11,7 @@ internal object MappingEnumClassGenerator : FunctionGenerator {
         sourceClass: KSClassDeclaration,
         targetClass: KSClassDeclaration,
         aliases: List<Alias>,
+        ignores: List<String>,
     ): FunSpec {
         val enumCases =
             sourceClass.declarations

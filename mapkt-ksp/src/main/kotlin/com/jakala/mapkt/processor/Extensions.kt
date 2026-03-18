@@ -53,3 +53,16 @@ internal fun KSClassDeclaration.getAliases(): List<Alias> =
                 )
             }
         }
+
+@Suppress("UNCHECKED_CAST")
+internal fun KSClassDeclaration.getIgnores(): List<String> =
+    this.annotations
+        .firstOrNull { annotation ->
+            annotation.shortName.asString() == MAP_KT_ANNOTATION_NAME
+        }?.arguments
+        ?.find { argument ->
+            argument.name?.asString() == MAPKT_IGNORES_ANNOTATION_ARG_NAME
+        }?.value
+        ?.let {
+            (it as? List<String>).orEmpty()
+        }.orEmpty()
