@@ -1,10 +1,10 @@
 package com.jakala.mapkt.processor.generator.implementations
 
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.jakala.mapkt.processor.util.Alias
-import com.jakala.mapkt.processor.util.MAPKT_FROM_TO_CLASS_ANNOTATION_ARG_NAME
 import com.jakala.mapkt.processor.MAPKT_ANNOTATION_NAME
 import com.jakala.mapkt.processor.generator.FunctionGenerator
+import com.jakala.mapkt.processor.util.Alias
+import com.jakala.mapkt.processor.util.MAPKT_FROM_TO_CLASS_ANNOTATION_ARG_NAME
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FunSpec
 

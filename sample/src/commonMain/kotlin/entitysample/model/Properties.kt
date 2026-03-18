@@ -1,4 +1,4 @@
-package entitysample.properties
+package entitysample.model
 
 import com.jakala.mapkt.annotations.MapKt
 import com.jakala.mapkt.annotations.PropertyMapping

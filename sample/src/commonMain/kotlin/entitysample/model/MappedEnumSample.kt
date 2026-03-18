@@ -1,4 +1,4 @@
-package entitysample.playground.defaults
+package entitysample.model
 
 import com.jakala.mapkt.annotations.MapKt
 

@@ -8,15 +8,15 @@ import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.google.devtools.ksp.symbol.Modifier
-import com.jakala.mapkt.processor.util.MAPKT_FROM_TO_CLASS_ANNOTATION_ARG_NAME
 import com.jakala.mapkt.processor.TARGET_PACKAGE_NAME
 import com.jakala.mapkt.processor.extensions.extractArgumentClass
-import com.jakala.mapkt.processor.util.extractMapKtAnnotation
-import com.jakala.mapkt.processor.util.generateFileName
-import com.jakala.mapkt.processor.generator.implementations.MappingFunctionGenerator
-import com.jakala.mapkt.processor.generator.implementations.MappingSealedClassGenerator
 import com.jakala.mapkt.processor.extensions.getAliases
 import com.jakala.mapkt.processor.extensions.getIgnores
+import com.jakala.mapkt.processor.generator.implementations.MappingFunctionGenerator
+import com.jakala.mapkt.processor.generator.implementations.MappingSealedClassGenerator
+import com.jakala.mapkt.processor.util.MAPKT_FROM_TO_CLASS_ANNOTATION_ARG_NAME
+import com.jakala.mapkt.processor.util.extractMapKtAnnotation
+import com.jakala.mapkt.processor.util.generateFileName
 import com.squareup.kotlinpoet.FileSpec
 import java.io.OutputStream
 
