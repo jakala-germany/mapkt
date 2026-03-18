@@ -2,7 +2,7 @@ package com.jakala.mapkt.processor
 
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 
-fun generateFileName(ksClass: KSClassDeclaration?): String =
+internal fun generateFileName(ksClass: KSClassDeclaration?): String =
     when {
         ksClass == null -> ""
         ksClass.parent != null ->

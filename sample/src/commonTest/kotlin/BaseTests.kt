@@ -9,18 +9,18 @@ import com.jakala.mapkt.toInnerEnum
 import com.jakala.mapkt.toLocalNestedModel
 import com.jakala.mapkt.toLocalSuperModel
 import com.jakala.mapkt.toMappedEnumClass
-import com.jakala.mapkt.toNopi
-import com.jakala.mapkt.toNopi2
 import com.jakala.mapkt.toRemoteSomeProperty
 import com.jakala.mapkt.toRemoteSuperModel
 import com.jakala.mapkt.toSuperModel
 import com.jakala.mapkt.toSuperNestedModel
+import com.jakala.mapkt.toTestClassOne
+import com.jakala.mapkt.toTestClassTwo
 import com.jakala.mapkt.toUpdateUserDTO
 import com.jakala.mapkt.toUserEntity
 import entitysample.LocalNestedModel
-import entitysample.LocalNopi
-import entitysample.LocalNopi2
 import entitysample.LocalSuperModel
+import entitysample.LocalTestClassOne
+import entitysample.LocalTestClassTwo
 import entitysample.RemoteSuperModel
 import entitysample.SuperModel
 import entitysample.SuperNestedModel
@@ -109,16 +109,16 @@ class BaseTests {
 
     @Test
     fun testLocalNopiToNopi2() {
-        val localNopi = LocalNopi(name = "TestName")
-        val nopi2 = localNopi.toNopi()
+        val localTestClassOne = LocalTestClassOne(name = "TestName")
+        val nopi2 = localTestClassOne.toTestClassOne()
 
         assertEquals("TestName", nopi2.name)
     }
 
     @Test
     fun testLocalNopi2ToLocalNopi() {
-        val localNopi2 = LocalNopi2(name = "TestName2")
-        val nopi = localNopi2.toNopi2()
+        val localNopi2 = LocalTestClassTwo(name = "TestName2")
+        val nopi = localNopi2.toTestClassTwo()
 
         assertEquals("TestName2", nopi.name)
     }
@@ -285,6 +285,13 @@ class BaseTests {
 
         assertEquals(remoteSomeProperty.fullName, someProperty.name)
         assertEquals(remoteSomeProperty.value, someProperty.value)
+    }
+
+    @Test
+    fun `ensure that repeatable annotation works`() {
+        val a = UserEntity(name = "a", address = Address("a", "a", 1, "a"))
+        a.toUpdateUserDTO()
+        a.toCreateUserDTO()
     }
 
     private fun assertTrue(

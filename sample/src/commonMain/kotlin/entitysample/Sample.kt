@@ -6,12 +6,12 @@ data class SuperModel(
     val name: String,
 )
 
-@MapKt(mapTo = [SuperModel::class])
+@MapKt(mapTo = SuperModel::class)
 data class LocalSuperModel(
     val name: String,
 )
 
-@MapKt(mapTo = [SuperModel::class])
+@MapKt(mapTo = SuperModel::class)
 data class RemoteSuperModel(
     val name: String,
 )
@@ -33,19 +33,19 @@ sealed class SuperNestedModel {
     }
 }
 
-@MapKt(mapTo = [SuperNestedModel::class])
+@MapKt(mapTo = SuperNestedModel::class)
 sealed class LocalNestedModel {
-    @MapKt(mapTo = [SuperNestedModel.Inner1::class])
+    @MapKt(mapTo = SuperNestedModel.Inner1::class)
     data class Inner1(
         val name: String,
     ) : LocalNestedModel()
 
-    @MapKt(mapTo = [SuperNestedModel.Inner2::class])
+    @MapKt(mapTo = SuperNestedModel.Inner2::class)
     data class Inner2(
         val name: String,
     ) : LocalNestedModel()
 
-    @MapKt(mapTo = [SuperNestedModel.InnerEnum::class])
+    @MapKt(mapTo = SuperNestedModel.InnerEnum::class)
     enum class InnerEnum {
         FIRST,
         SECOND,
@@ -54,25 +54,25 @@ sealed class LocalNestedModel {
     }
 }
 
-sealed class NoppiDoppi
+sealed class SealedClassRoot
 
-@MapKt(mapTo = [NoppiDoppi::class])
-sealed class LocalNoppiDoppi
+@MapKt(mapTo = SealedClassRoot::class)
+sealed class LocalSeleadClassRoot
 
-data class Nopi(
+data class TestClassOne(
     val name: String,
-) : NoppiDoppi()
+) : SealedClassRoot()
 
-data class Nopi2(
+data class TestClassTwo(
     val name: String,
-) : NoppiDoppi()
+) : SealedClassRoot()
 
-@MapKt(mapTo = [Nopi::class])
-data class LocalNopi(
+@MapKt(mapTo = TestClassOne::class)
+data class LocalTestClassOne(
     val name: String,
-) : LocalNoppiDoppi()
+) : LocalSeleadClassRoot()
 
-@MapKt(mapTo = [Nopi2::class])
-data class LocalNopi2(
+@MapKt(mapTo = TestClassTwo::class)
+data class LocalTestClassTwo(
     val name: String,
-) : LocalNoppiDoppi()
+) : LocalSeleadClassRoot()

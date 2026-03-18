@@ -7,6 +7,8 @@ plugins {
 kotlin {
     jvm()
 
+    explicitApi()
+
     sourceSets {
         val jvmMain by getting {
             dependencies {

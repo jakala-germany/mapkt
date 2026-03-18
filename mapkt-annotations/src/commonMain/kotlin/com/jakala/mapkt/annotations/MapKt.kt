@@ -7,6 +7,19 @@ import kotlin.reflect.KClass
  */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.SOURCE)
+@Repeatable
 annotation class MapKt(
-    val mapTo: Array<KClass<*>> = [],
+    val mapTo: KClass<*>,
+    val aliases: Array<PropertyMapping> = [],
+)
+
+/**
+ * class for property mappings
+ *
+ * @param src the source property name
+ * @param tar the target property name
+ */
+annotation class PropertyMapping(
+    val src: String,
+    val tar: String,
 )

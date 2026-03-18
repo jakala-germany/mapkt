@@ -43,26 +43,21 @@ Define two or more similar data classes with a shared mapping annotation:
 
 ```kotlin
 @MapKt(
-    mapTo = [RemoteModel::class], // Map FROM Dog TO Cat
+    mapTo = Cat::class, // Only need to annotate one class in the pair
 )
-data class SharedModel(val name: String, val age: Int)
-
-@MapKt(
-    mapTo = [SharedModel::class], // Map FROM Cat TO Dog  
-)
-data class RemoteModel(val name: String, val age: Int)
+data class Dog(val name: String, val age: Int)
 ```
 
 ### 3. Generate and Use Mapping Functions
 
 ```kotlin
-val shared = SharedModel("Fido", 5)
-val remote = shared.toRemote()    
-println(remote.name)                  // Output: Fido
-println(remote.age)                   // Output: 5
+val dog = Dog("Fido", 5)
+val cat = Dog.toCat(dog)           // or dog.toCat()
+println(cat.name)                  // Output: Fido
+println(cat.age)                   // Output: 5
 
 // Works in reverse!
-val convertedDog = remote.toShared() 
+val convertedDog = Cat.toDog(cat)  
 ```
 
 ## Annotations Reference
@@ -76,9 +71,43 @@ Define mappings on data classes that should generate conversion functions.
  * Generates mapping functions from this class to the specified types.
  */
 annotation class MapKt(
-    val mapTo: Array<KClass<*>> // Types this class maps TO
+    val mapTo: KClass<*> // Types this class maps TO
 )
 ```
+
+If you need more than one Mapping you can just add more `@MapKt` annotations:
+
+```kotlin
+@MapKt(mapTo = Cat::class)
+@MapKt(mapTo = Mouse::class)
+data class Dog(val name: String, val age: Int)
+```
+
+### Parameter Mapping
+
+By default, MapKt matches properties by name and type. You can customize mappings using additional annotations:
+
+```kotlin
+data class Dog(
+    val name: String,
+    val age: Int,
+    val ownersCount: Int,
+)
+
+@MapKt(
+    mapTo = Dog::class,
+    aliases = [
+        PropertyMapping(source = "butlerCount", target = "ownersCount")
+    ]
+)
+data class Cat(
+    val name: String,
+    val age: Int,
+    val butlerCount: Int, 
+)
+```
+
+This will generate mapping functions that correctly map `butlerCount` in `Cat` to `ownersCount` in `Dog`.
 
 ## Project Structure
 
