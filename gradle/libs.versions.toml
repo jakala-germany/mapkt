@@ -2,7 +2,7 @@
 ktlint = "14.2.0"
 kotlinPoet = "2.3.0"
 kspVersion = "2.3.6"
-multiplatformVersion = "2.3.10"
+multiplatformVersion = "2.3.21"
 
 [libraries]
 kotlinPoet = { group = "com.squareup", name = "kotlinpoet", version.ref = "kotlinPoet" }
