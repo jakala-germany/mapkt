@@ -6,7 +6,7 @@ import com.jakala.mapkt.annotations.PropertyMapping
 @MapKt(
     mapTo = RemoteSomeProperty::class,
     aliases = [
-        PropertyMapping("name", "fullName"),
+        PropertyMapping(source = "name", target = "fullName"),
     ],
     ignores = ["newValue"],
 )

@@ -80,11 +80,6 @@ internal class MappingFunctionGenerator(
                 ParameterSpec
                     .builder(paramName, param.type.resolve().toTypeName())
                     .run {
-                        if (paramName == "dbId") {
-                            logger.warn(
-                                "Processing parameter $paramName with ${ignores.joinToString()}",
-                            )
-                        }
                         if (paramName !in ignores) {
                             this.defaultValue(
                                 createDefaultBlock(param.name, sourceClass, aliases, param),

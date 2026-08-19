@@ -8,10 +8,9 @@ import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.jakala.mapkt.processor.TARGET_PACKAGE_NAME
-import com.jakala.mapkt.processor.extensions.extractArgumentClass
+import com.jakala.mapkt.processor.extensions.getMapKtAnnotations
+import com.jakala.mapkt.processor.extensions.getMapToDeclaration
 import com.jakala.mapkt.processor.generator.implementations.MappingEnumClassGenerator
-import com.jakala.mapkt.processor.util.MAPKT_FROM_TO_CLASS_ANNOTATION_ARG_NAME
-import com.jakala.mapkt.processor.util.extractMapKtAnnotation
 import com.jakala.mapkt.processor.util.generateFileName
 import com.jakala.mapkt.processor.visitor.MapKtClassVisitor.Companion.GENERATED_CLASS_SUFFIX
 import com.squareup.kotlinpoet.FileSpec
@@ -25,34 +24,25 @@ internal class MapKtEnumClassVisitor(
         classDeclaration: KSClassDeclaration,
         data: Unit,
     ) {
-        val kcmAnnotation: List<KSAnnotation> =
-            extractMapKtAnnotation(
-                targetClass = classDeclaration,
-                logger = logger,
-            )
+        val mapKtAnnotations = classDeclaration.getMapKtAnnotations()
 
-        if (kcmAnnotation.isEmpty()) {
+        if (mapKtAnnotations.isEmpty()) {
             logger.warn("Missing annotation for class $classDeclaration.")
             return
         }
-        kcmAnnotation.forEach {
+        mapKtAnnotations.forEach { mapKtAnnotation ->
             generateMapFunction(
                 classDeclaration = classDeclaration,
-                kcmAnnotation = it,
+                mapKtAnnotation = mapKtAnnotation,
             )
         }
     }
 
-    fun generateMapFunction(
+    private fun generateMapFunction(
         classDeclaration: KSClassDeclaration,
-        kcmAnnotation: KSAnnotation,
+        mapKtAnnotation: KSAnnotation,
     ) {
-        // Nothing to do if none of the mapping arguments is filled
-        val mappingTarget =
-            resolver.extractArgumentClass(
-                kcmAnnotation,
-                MAPKT_FROM_TO_CLASS_ANNOTATION_ARG_NAME,
-            )
+        val mappingTarget = mapKtAnnotation.getMapToDeclaration(resolver)
 
         // Nothing to do if none of the mapping arguments is filled
         if (mappingTarget == null) {

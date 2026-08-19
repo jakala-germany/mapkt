@@ -3,11 +3,14 @@ package commonTest
 import com.jakala.mapkt.toAddress
 import com.jakala.mapkt.toComplexSubType
 import com.jakala.mapkt.toCreateUserDTO
+import com.jakala.mapkt.toDefaultSample
 import com.jakala.mapkt.toEnumClass
 import com.jakala.mapkt.toEnumSample
 import com.jakala.mapkt.toInnerEnum
 import com.jakala.mapkt.toLocalNestedModel
+import com.jakala.mapkt.toLocalSomeProperty
 import com.jakala.mapkt.toLocalSuperModel
+import com.jakala.mapkt.toMappedDefaultSample
 import com.jakala.mapkt.toMappedEnumClass
 import com.jakala.mapkt.toRemoteSomeProperty
 import com.jakala.mapkt.toRemoteSuperModel
@@ -33,6 +36,11 @@ import entitysample.dto.CreateUserDTO
 import entitysample.dto.UpdateUserDTO
 import entitysample.dto.UserEntity
 import entitysample.model.Address
+import entitysample.model.ComplexSample
+import entitysample.model.DefaultSample
+import entitysample.model.EnumSample
+import entitysample.model.LocalSomeProperty
+import entitysample.model.MappedDefaultSample
 import entitysample.model.MappedEnumSample
 import entitysample.model.RemoteSomeProperty
 import entitysample.model.SomeProperty
@@ -310,6 +318,178 @@ class BaseTests {
         val a = UserEntity(name = "a", address = Address("a", "a", 1, "a"))
         a.toUpdateUserDTO()
         a.toCreateUserDTO()
+    }
+
+    @Test
+    fun testAliasIsAppliedInBothDirections() {
+        val someProperty =
+            SomeProperty(
+                name = "Some name",
+                value = "Some value",
+                newValue = "Some new value",
+            )
+
+        val roundTripped = someProperty.toRemoteSomeProperty().toSomeProperty("Another new value")
+
+        assertEquals(someProperty.name, roundTripped.name)
+        assertEquals(someProperty.value, roundTripped.value)
+        assertEquals("Another new value", roundTripped.newValue)
+    }
+
+    @Test
+    fun testAliasesOnlyApplyToTheAnnotationTheyAreDeclaredOn() {
+        val someProperty =
+            SomeProperty(
+                name = "Some name",
+                value = "Some value",
+                newValue = "Some new value",
+            )
+
+        val remoteSomeProperty = someProperty.toRemoteSomeProperty()
+        val localSomeProperty = someProperty.toLocalSomeProperty(dbId = 42L)
+
+        // The alias is declared on the RemoteSomeProperty mapping only
+        assertEquals("Some name", remoteSomeProperty.fullName)
+        assertEquals("Some name", localSomeProperty.name)
+    }
+
+    @Test
+    fun testIgnoredPropertyOfTheTargetBecomesAParameter() {
+        val someProperty =
+            SomeProperty(
+                name = "Some name",
+                value = "Some value",
+                newValue = "Some new value",
+            )
+
+        val localSomeProperty = someProperty.toLocalSomeProperty(dbId = 42L)
+
+        assertEquals(42L, localSomeProperty.dbId)
+        assertEquals("Some name", localSomeProperty.name)
+        assertEquals("Some value", localSomeProperty.value)
+    }
+
+    @Test
+    fun testIgnoredPropertiesAreDroppedInBothDirections() {
+        val localSomeProperty =
+            LocalSomeProperty(
+                dbId = 42L,
+                name = "Some name",
+                value = "Some value",
+            )
+
+        val someProperty = localSomeProperty.toSomeProperty("Some new value")
+
+        // `dbId` is ignored, so it never reaches SomeProperty
+        assertEquals("Some name", someProperty.name)
+        assertEquals("Some value", someProperty.value)
+        assertEquals("Some new value", someProperty.newValue)
+    }
+
+    @Test
+    fun testRepeatedAnnotationGeneratesAMappingPerTarget() {
+        val someProperty =
+            SomeProperty(
+                name = "Some name",
+                value = "Some value",
+                newValue = "Some new value",
+            )
+
+        val remoteSomeProperty = someProperty.toRemoteSomeProperty()
+        val localSomeProperty = someProperty.toLocalSomeProperty(dbId = 42L)
+
+        assertEquals(someProperty.value, remoteSomeProperty.value)
+        assertEquals(someProperty.value, localSomeProperty.value)
+    }
+
+    @Test
+    fun testDefaultSampleToMappedDefaultSample() {
+        val defaultSample =
+            DefaultSample(
+                intValue = 7,
+                enumValue = EnumSample.SECOND,
+                nullableEnumValue = EnumSample.FIRST,
+                complexSample = ComplexSample("complex"),
+                nullableComplexSample = ComplexSample("nullable complex"),
+            )
+
+        val mappedDefaultSample = defaultSample.toMappedDefaultSample()
+
+        assertEquals(7, mappedDefaultSample.intValue)
+        assertEquals(MappedEnumSample.SECOND, mappedDefaultSample.enumValue)
+        assertEquals(MappedEnumSample.FIRST, mappedDefaultSample.nullableEnumValue)
+        assertEquals("complex", mappedDefaultSample.complexSample.stringValue)
+        assertEquals("nullable complex", mappedDefaultSample.nullableComplexSample?.stringValue)
+    }
+
+    @Test
+    fun testMappedDefaultSampleToDefaultSampleKeepsNulls() {
+        val mappedDefaultSample =
+            MappedDefaultSample(
+                intValue = 3,
+                enumValue = MappedEnumSample.FIRST,
+                complexSample = ComplexSample("complex"),
+            )
+
+        val defaultSample = mappedDefaultSample.toDefaultSample()
+
+        assertEquals(3, defaultSample.intValue)
+        assertEquals(EnumSample.FIRST, defaultSample.enumValue)
+        assertEquals(null, defaultSample.nullableEnumValue)
+        assertEquals("complex", defaultSample.complexSample.stringValue)
+        assertEquals(null, defaultSample.nullableComplexSample)
+    }
+
+    @Test
+    fun testGeneratedSubTypeParameterCanBeOverridden() {
+        val defaultSample =
+            DefaultSample(
+                intValue = 1,
+                enumValue = EnumSample.FIRST,
+                complexSample = ComplexSample("complex"),
+            )
+
+        val mappedDefaultSample =
+            defaultSample.toMappedDefaultSample(enumValue = MappedEnumSample.SECOND)
+
+        assertEquals(MappedEnumSample.SECOND, mappedDefaultSample.enumValue)
+    }
+
+    @Test
+    fun testComplexSubTypeMapsNestedTypeAndList() {
+        val remote =
+            ComplexSubTypeRemote(
+                name = "ComplexName",
+                address = AddressRemote("addr1", "zip1", 100, "city1"),
+                addresses =
+                    listOf(
+                        AddressRemote("a1", "z1", 1, "c1"),
+                        AddressRemote("a2", "z2", 2, "c2"),
+                    ),
+            )
+
+        val complexSubType = remote.toComplexSubType()
+
+        assertEquals("addr1", complexSubType.address?.street)
+        assertEquals(100, complexSubType.address?.houseNumber)
+        assertEquals(2, complexSubType.addresses?.size)
+        assertEquals("a2", complexSubType.addresses?.get(1)?.street)
+        assertEquals("c2", complexSubType.addresses?.get(1)?.city)
+    }
+
+    @Test
+    fun testComplexSubTypeKeepsNullNestedTypes() {
+        val remote =
+            ComplexSubTypeRemote(
+                name = "TestName",
+                address = null,
+                addresses = null,
+            )
+
+        val complexSubType = remote.toComplexSubType()
+
+        assertEquals(null, complexSubType.address)
+        assertEquals(null, complexSubType.addresses)
     }
 
     private fun assertTrue(

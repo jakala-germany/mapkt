@@ -1,10 +1,10 @@
 package com.jakala.mapkt.processor.generator.implementations
 
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.jakala.mapkt.processor.MAPKT_ANNOTATION_NAME
+import com.jakala.mapkt.processor.extensions.getMapKtAnnotations
+import com.jakala.mapkt.processor.extensions.getMapToSimpleName
 import com.jakala.mapkt.processor.generator.FunctionGenerator
 import com.jakala.mapkt.processor.util.Alias
-import com.jakala.mapkt.processor.util.MAPKT_FROM_TO_CLASS_ANNOTATION_ARG_NAME
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FunSpec
 
@@ -35,21 +35,10 @@ internal object MappingSealedClassGenerator : FunctionGenerator {
                     ),
                 ).addModifiers()
 
-        fun KSClassDeclaration.annotationValue() =
-            this.annotations
-                .firstOrNull { it.shortName.asString() == MAPKT_ANNOTATION_NAME }
-                ?.arguments
-                ?.get(0)
-                ?.let {
-                    if (it.name?.asString() == MAPKT_FROM_TO_CLASS_ANNOTATION_ARG_NAME) {
-                        it.value
-                            .toString()
-                            .removePrefix("[")
-                            .removeSuffix("]")
-                    } else {
-                        null
-                    }
-                }
+        fun KSClassDeclaration.mapToNames() =
+            this.getMapKtAnnotations().mapNotNull { mapKtAnnotation ->
+                mapKtAnnotation.getMapToSimpleName()
+            }
 
         funBuilder.beginControlFlow("return when(this)")
         subclasses
@@ -57,12 +46,8 @@ internal object MappingSealedClassGenerator : FunctionGenerator {
                 val targetSubClass =
                     targetSubclasses.firstOrNull { target ->
                         target.simpleName.asString() == subclass.simpleName.asString() ||
-                            target
-                                .annotationValue()
-                                ?.equals(subclass.simpleName.asString()) == true ||
-                            subclass
-                                .annotationValue()
-                                ?.equals(target.simpleName.asString()) == true
+                            subclass.simpleName.asString() in target.mapToNames() ||
+                            target.simpleName.asString() in subclass.mapToNames()
                     }
                 subclass to
                     requireNotNull(targetSubClass) {

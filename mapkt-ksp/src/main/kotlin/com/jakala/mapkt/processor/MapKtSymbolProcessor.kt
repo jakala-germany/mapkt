@@ -15,7 +15,6 @@ import com.jakala.mapkt.processor.visitor.MapKtClassVisitor
 import com.jakala.mapkt.processor.visitor.MapKtEnumClassVisitor
 
 internal const val TARGET_PACKAGE_NAME = "com.jakala.mapkt"
-internal const val MAPKT_ANNOTATION_NAME = "MapKt"
 
 public class MapKtSymbolProcessor(
     private val codeGenerator: CodeGenerator,

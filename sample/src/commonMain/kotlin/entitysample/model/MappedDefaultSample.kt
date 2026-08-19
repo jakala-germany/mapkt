@@ -6,11 +6,11 @@ import com.jakala.mapkt.annotations.PropertyMapping
 @MapKt(
     mapTo = DefaultSample::class,
     aliases = [
-        PropertyMapping(src = "intValue", tar = "intValue"),
-        PropertyMapping(src = "enumValue", tar = "enumValue"),
-        PropertyMapping(src = "nullableEnumValue", tar = "nullableEnumValue"),
-        PropertyMapping(src = "complexSample", tar = "complexSample"),
-        PropertyMapping(src = "nullableComplexSample", tar = "nullableComplexSample"),
+        PropertyMapping(source = "intValue", target = "intValue"),
+        PropertyMapping(source = "enumValue", target = "enumValue"),
+        PropertyMapping(source = "nullableEnumValue", target = "nullableEnumValue"),
+        PropertyMapping(source = "complexSample", target = "complexSample"),
+        PropertyMapping(source = "nullableComplexSample", target = "nullableComplexSample"),
     ],
 )
 data class MappedDefaultSample(
