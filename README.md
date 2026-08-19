@@ -39,25 +39,32 @@ dependencies {
 
 ### 2. Define Your Data Classes
 
-Define two or more similar data classes with a shared mapping annotation:
+Annotate one class of a pair with the class it should be mapped to:
 
 ```kotlin
 @MapKt(
-    mapTo = Cat::class, // Only need to annotate one class in the pair
+    mapTo = UserDto::class, // Only need to annotate one class in the pair
 )
-data class Dog(val name: String, val age: Int)
+data class UserEntity(val name: String, val age: Int)
+
+data class UserDto(val name: String, val age: Int)
 ```
 
 ### 3. Generate and Use Mapping Functions
 
+Both directions are generated as extension functions in the `com.jakala.mapkt` package:
+
 ```kotlin
-val dog = Dog("Fido", 5)
-val cat = Dog.toCat(dog)           // or dog.toCat()
-println(cat.name)                  // Output: Fido
-println(cat.age)                   // Output: 5
+import com.jakala.mapkt.toUserDto
+import com.jakala.mapkt.toUserEntity
+
+val entity = UserEntity("Fido", 5)
+val dto = entity.toUserDto()
+println(dto.name)                    // Output: Fido
+println(dto.age)                     // Output: 5
 
 // Works in reverse!
-val convertedDog = Cat.toDog(cat)  
+val convertedEntity = dto.toUserEntity()
 ```
 
 ## Annotations Reference
@@ -68,79 +75,87 @@ Define mappings on data classes that should generate conversion functions.
 
 ```kotlin
 /**
- * Generates mapping functions from this class to the specified types.
+ * Generates mapping functions between the annotated class and `mapTo`,
+ * one for each direction.
  */
+@Repeatable
 annotation class MapKt(
-    val mapTo: KClass<*> // Types this class maps TO
+    val mapTo: KClass<*>,                     // Type this class is mapped from and to
+    val aliases: Array<PropertyMapping> = [], // Properties that differ in name
+    val ignores: Array<String> = [],          // Properties that are not mapped
 )
 ```
 
-If you need more than one Mapping you can just add more `@MapKt` annotations:
+If you need more than one mapping you can just add more `@MapKt` annotations,
+every annotation carries its own `aliases` and `ignores`:
 
 ```kotlin
-@MapKt(mapTo = Cat::class)
-@MapKt(mapTo = Mouse::class)
-data class Dog(val name: String, val age: Int)
+@MapKt(mapTo = UserDto::class)
+@MapKt(mapTo = UserResponse::class)
+data class UserEntity(val name: String, val age: Int)
 ```
 
 ### Parameter Mapping
 
-By default, MapKt matches properties by name and type. You can customize mappings using additional annotations:
+By default, MapKt matches properties by name and type. Properties that are named
+differently on the two classes are paired up with `aliases`:
 
 ```kotlin
-data class Dog(
+data class UserDto(
     val name: String,
     val age: Int,
-    val ownersCount: Int,
+    val addressCount: Int,
 )
 
 @MapKt(
-    mapTo = Dog::class,
+    mapTo = UserDto::class,
     aliases = [
-        PropertyMapping(source = "butlerCount", target = "ownersCount")
-    ]
+        PropertyMapping(source = "shippingAddressCount", target = "addressCount"),
+    ],
 )
-data class Cat(
+data class UserEntity(
     val name: String,
     val age: Int,
-    val butlerCount: Int, 
+    val shippingAddressCount: Int,
 )
 ```
 
-This will generate mapping functions that correctly map `butlerCount` in `Cat` to `ownersCount` in `Dog`.
+`source` is the property of the annotated class, `target` the property of the `mapTo`
+class. The alias is applied in both directions, so it only has to be declared once.
 
 ### Parameter Ignoring
 
-By default, MapKt tries to map all properties. You can ignore specific properties if they don't have a corresponding match: (or if you just don't want them mapped)
+By default, MapKt tries to map all properties. You can ignore properties that have no
+corresponding match (or that you just don't want mapped) with `ignores`. An ignored
+property has to be passed as a parameter of the generated function instead:
 
 ```kotlin
 @MapKt(
-    mapTo = Cat::class,
-    ignore = ["woofsPerSecond"] // This property will be ignored during mapping
+    mapTo = UserDto::class,
+    ignores = ["dbId"], // This property will be ignored during mapping
 )
-data class Dog(
+data class UserEntity(
+    val dbId: Long,
     val name: String,
     val age: Int,
-    val woofsPerSecond: Long, 
 )
 
 // region Generated Code
 
-// Generated function will look like this
-fun Dog.toCat(): Cat {
-    return Cat(
-        name = this.name,
-        age = this.age,
-    )
-}
-// And the reverse mapping will require you to set it as an parameter
-fun Cat.toDog(woofsPerSecond: Long): Dog {
-    return Dog(
-        name = this.name,
-        age = this.age,
-        woofsPerSecond = woofsPerSecond
-    )
-}
+// The ignored property is simply dropped in this direction
+public fun UserEntity.toUserDto(): UserDto = UserDto(
+    name = this.name,
+    age = this.age,
+)
+
+// And the reverse mapping requires you to set it as a parameter
+public fun UserDto.toUserEntity(dbId: Long): UserEntity = UserEntity(
+    name = this.name,
+    age = this.age,
+    dbId = dbId,
+)
+
+// endregion
 ```
 
 ## Project Structure

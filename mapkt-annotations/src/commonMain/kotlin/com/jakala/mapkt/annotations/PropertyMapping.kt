@@ -1,12 +1,15 @@
 package com.jakala.mapkt.annotations
 
 /**
- * class for property mappings
+ * Maps a property of the annotated class onto a differently named
+ * property of the `mapTo` target class.
  *
- * @param src the source property name (annotated class)
- * @param tar the target property name (mapTo target class)
+ * The mapping is applied in both directions, it only has to be declared once.
+ *
+ * @param source the property name on the annotated class
+ * @param target the property name on the `mapTo` target class
  */
 annotation class PropertyMapping(
-    val src: String,
-    val tar: String,
+    val source: String,
+    val target: String,
 )
