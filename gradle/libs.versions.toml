@@ -1,7 +1,7 @@
 [versions]
 ktlintVersion = "14.2.0"
 kotlinPoetVersion = "2.3.0"
-kspVersion = "2.3.6"
+kspVersion = "2.3.11"
 multiplatformVersion = "2.4.10"
 
 [libraries]
