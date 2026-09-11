@@ -1,6 +1,6 @@
 [versions]
 ktlintVersion = "14.2.0"
-kotlinPoetVersion = "2.3.0"
+kotlinPoetVersion = "2.4.0"
 kspVersion = "2.3.6"
 multiplatformVersion = "2.4.10"
 
