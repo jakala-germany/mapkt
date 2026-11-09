@@ -1,3 +1,4 @@
+import com.google.devtools.ksp.gradle.KspAATask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 
 plugins {
@@ -8,10 +9,7 @@ plugins {
 
 ktlint {
     filter {
-        exclude { element ->
-            val path = element.file.path
-            path.contains("/generated/")
-        }
+        exclude { it.file.path.contains("/generated/") }
     }
 }
 
@@ -21,30 +19,31 @@ kotlin {
     iosArm64()
     iosSimulatorArm64()
     sourceSets {
-        val commonTest by getting {
-            dependencies {
-                implementation(kotlin("test"))
-                kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
-            }
-        }
-
-        val commonMain by getting {
+        commonMain {
+            kotlin.srcDir(layout.buildDirectory.dir("generated/ksp/metadata/commonMain/kotlin"))
             dependencies {
                 implementation(project(":mapkt-annotations"))
-                kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
+            }
+        }
+
+        commonTest {
+            dependencies {
+                implementation(kotlin("test"))
             }
         }
     }
 }
 
-project.tasks.withType(KotlinCompilationTask::class.java).configureEach {
-    if (name != "kspCommonTestKotlinMetadata") {
-        dependsOn("kspCommonMainKotlinMetadata")
-    }
-}
+val kspCommonMain = "kspCommonMainKotlinMetadata"
 
+tasks.withType<KotlinCompilationTask<*>>().configureEach {
+    dependsOn(kspCommonMain)
+}
+tasks.withType<KspAATask>().configureEach {
+    if (name != kspCommonMain) dependsOn(kspCommonMain)
+}
 tasks.matching { it.name.startsWith("runKtlint") }.configureEach {
-    dependsOn("kspCommonMainKotlinMetadata")
+    dependsOn(kspCommonMain)
 }
 
 dependencies {
